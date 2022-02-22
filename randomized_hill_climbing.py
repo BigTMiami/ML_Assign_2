@@ -70,6 +70,8 @@ def get_knapsack_problem(length=5, max_weight_pct=0.35):
     master_weights = np.array([11, 10, 18, 16, 17, 7, 14, 15, 17, 10, 17, 15, 4, 12, 8, 3, 12, 15, 14, 2])
     master_values = np.array([10, 8, 8, 19, 6, 15, 9, 7, 3, 7, 11, 12, 13, 9, 10, 12, 13, 17, 16, 5])
 
+    maximum_fitness_values = np.array([1, 1, 1, 19, 27, 45, 75, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
     weights = master_weights[0:length]
     values = master_values[0:length]
 
@@ -77,7 +79,26 @@ def get_knapsack_problem(length=5, max_weight_pct=0.35):
     maximize = True
     max_val = int(sum(weights) * max_weight_pct / min(weights)) + 1
     knapsack_problem = mlrose.DiscreteOpt(length, f_knapsack, max_val=max_val, maximize=maximize)
-    return knapsack_problem
+    return knapsack_problem, maximum_fitness_values[length - 1]
+
+
+def get_max_knapsack_fitness_values(start, end):
+    max_fitness_values = [0, 0, 0]
+    for length in range(start, end):
+        knapsack_problem, max_fitness_value = get_knapsack_problem(length)
+        total_iterations = 100
+        repetions_per_iteration = 100
+        maximize = True
+        rh_knapsack_values, max_fitness_value_at_length = random_hill(
+            knapsack_problem,
+            total_iterations=total_iterations,
+            repetions_per_iteration=repetions_per_iteration,
+            maximize=maximize,
+            max_fitness_value=max_fitness_value,
+        )
+        max_fitness_values.append(max_fitness_value_at_length)
+    print(max_fitness_values)
+    return max_fitness_values
 
 
 def random_hill(
@@ -114,7 +135,7 @@ def random_hill(
 
         iteration_values.append([max_iters, rep_values.mean(), rep_values, bin_counts])
     print(f"Best {overall_best_fitness}:{overall_best_state}")
-    return iteration_values
+    return iteration_values, overall_best_fitness
 
 
 threshold_percentage = 0.15
@@ -158,26 +179,19 @@ random_hill_chart_seaborn_boxplot(rh_queens_values, title="8 Queens")
 random_hill_chart_lineplot(rh_queens_values, title="8 Queens", maximize=False)
 random_hill_chart_heatmap(rh_queens_values, title="8 Queens", maximize=False)
 
-length = 5
-max_int = 20
-weights = np.random.randint(1, high=max_int, size=length)
-values = np.random.randint(1, high=max_int, size=length)
-print(f"weights:{weights}")
-print(f"values:{values}")
+get_max_knapsack_fitness_values(8, 10)
 
-max_weight_pct = 0.35
-f_knapsack = mlrose.Knapsack(weights, values, max_weight_pct=max_weight_pct)
-maximize = True
-max_val = int(sum(weights) * max_weight_pct / min(weights)) + 1
-knapsack_problem = mlrose.DiscreteOpt(length, f_knapsack, max_val=max_val, maximize=maximize)
+length = 6
+knapsack_problem, max_fitness_value = get_knapsack_problem(length)
 total_iterations = 100
 repetions_per_iteration = 100
-rh_knapsack_values = random_hill(
+maximize = True
+rh_knapsack_values, max_fitness_value_at_length = random_hill(
     knapsack_problem,
     total_iterations=total_iterations,
     repetions_per_iteration=repetions_per_iteration,
     maximize=maximize,
-    max_fitness_value=114,
+    max_fitness_value=max_fitness_value,
 )
 random_hill_chart(rh_knapsack_values, title="Knapsack")
 random_hill_chart_boxplot(rh_knapsack_values, title="Knapsack")

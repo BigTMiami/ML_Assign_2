@@ -85,6 +85,25 @@ def random_hill_chart_lineplot(values, title="FILL IN", maximize=True):
     save_to_file(plt, alogrithm_type + " " + title + " lineplot")
 
 
+def chart_lineplot(values, suptitle="FILL IN", title="FILL IN", maximize=True):
+    fig, ax = plt.subplots(1, figsize=(4, 5))
+    fig.suptitle(suptitle, fontsize=16)
+    ax.set_title(title)
+    x_axis = []
+    y_axis = []
+    for value in values:
+        x = value[0]
+        for y in value[2]:
+            x_axis.append(x)
+
+            y_axis.append(y if maximize else -y)
+    sns.lineplot(x=x_axis, y=y_axis, ax=ax)
+    ax.set_xlabel("Iterations")
+    ax.set_ylabel("Fitness")
+
+    save_to_file(plt, suptitle + " " + title + " lineplot")
+
+
 def random_hill_chart_heatmap(values, title="FILL IN", maximize=True):
     fig, ax = plt.subplots(1, figsize=(4, 5))
     alogrithm_type = "Random Hill Chart"
@@ -106,3 +125,25 @@ def random_hill_chart_heatmap(values, title="FILL IN", maximize=True):
     plt.yticks(rotation=0)
 
     save_to_file(plt, alogrithm_type + " " + title + " heatmap")
+
+
+def chart_heatmap(values, suptitle="FILL IN", title="FILL IN", maximize=True):
+    fig, ax = plt.subplots(1, figsize=(4, 5))
+    fig.suptitle(suptitle, fontsize=16)
+    ax.set_title(title)
+    data = np.array([values[0][3]])
+    for value in values:
+        data = np.append(data, [value[3]], axis=0)
+    data = data.transpose()
+    if maximize:
+        data = np.flip(data, axis=0)
+    y_ticks = ["90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%", "0%"]
+    sns.heatmap(data=data, ax=ax, yticklabels=y_ticks)
+    ax.set_xlabel("Iterations")
+    ax.set_ylabel("Fitness Percentile vs Maximum")
+    # fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+    # ytick_formats = mtick.FormatStrFormatter(fmt)
+    # ax.yaxis.set_major_formatter(ytick_formats)
+    plt.yticks(rotation=0)
+
+    save_to_file(plt, suptitle + " " + title + " heatmap")
