@@ -26,7 +26,8 @@ def get_knapsack_problem(length=20, max_weight_pct=0.35, max_val=2):
     master_weights = np.array([11, 10, 18, 16, 17, 7, 14, 15, 17, 10, 17, 15, 4, 12, 8, 3, 12, 15, 14, 2])
     master_values = np.array([10, 8, 8, 19, 6, 15, 9, 7, 3, 7, 11, 12, 13, 9, 10, 12, 13, 17, 16, 5])
 
-    maximum_fitness_values = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 117])
+    fitness_values = {20: [0, 120]}
+    max_fitness_value, min_fitness_value = fitness_values[length] if length in fitness_values else [0, 0]
 
     weights = master_weights[0:length]
     values = master_values[0:length]
@@ -36,7 +37,18 @@ def get_knapsack_problem(length=20, max_weight_pct=0.35, max_val=2):
     if max_val is None:
         max_val = int(sum(weights) * max_weight_pct / min(weights)) + 1
     knapsack_problem = mh.DiscreteOpt(length, f_knapsack, max_val=max_val, maximize=maximize)
-    return knapsack_problem, maximum_fitness_values[length - 1]
+    return knapsack_problem, max_fitness_value, min_fitness_value
+
+
+def get_decay_schedule(problem_type):
+    if problem_type == "knapsack":
+        return mh.GeomDecay(init_temp=10.75, decay=0.99, min_temp=0.0001)
+    elif problem_type == "four_peaks":
+        return mh.GeomDecay(init_temp=0.35, decay=0.99, min_temp=0.0001)
+    elif problem_type == "color":
+        return mh.GeomDecay(init_temp=0.15, decay=0.99, min_temp=0.0001)
+    else:
+        print(f"Unsupported Problem Type of {problem_type}")
 
 
 def create_kcolor_edges(node_count, connection_chance):
@@ -146,7 +158,7 @@ def get_queens_problem(length=8, max_val=8):
     return queens_problem, maximum_fitness_value
 
 
-def print_histogram(iteration, values, min_value=0, max_value=None, print_header=False, maximize=True):
+def print_histogram(iteration, values, min_value=0, max_value=None, print_header=False):
     max_value = max_value if max_value is not None else max(values)
 
     bins, edges = np.histogram(values, range=(min_value, max_value))
@@ -225,65 +237,6 @@ def random_hill(
     return iteration_values, overall_best_fitness
 
 
-### RANDOM HILL CLIMBING
-four_peaks_problem, max_fitness_value = get_four_peaks_problem()
-
-repetions_per_iteration = 100
-total_iterations = 50
-four_peaks_random_hill_values, overall_best_fitness = random_hill(
-    four_peaks_problem,
-    total_iterations=total_iterations,
-    max_fitness_value=max_fitness_value,
-    repetions_per_iteration=repetions_per_iteration,
-)
-
-rh_four_peaks_values, overall_best_fitness = iterate_algorithm(
-    four_peaks_problem,
-    "rh",
-    total_iterations=total_iterations,
-    max_fitness_value=max_fitness_value,
-    repetions_per_iteration=repetions_per_iteration,
-)
-
-
-random_hill_chart_lineplot(rh_four_peaks_values, title="Four Peaks Problem")
-random_hill_chart_heatmap(rh_four_peaks_values, title="Four Peaks Problem")
-
-
-knapsack_problem, max_fitness_value = get_knapsack_problem()
-
-total_iterations = 50
-repetions_per_iteration = 100
-maximize = True
-rh_knapsack_values, max_fitness_value_at_length = random_hill(
-    knapsack_problem,
-    total_iterations=total_iterations,
-    repetions_per_iteration=repetions_per_iteration,
-    maximize=maximize,
-    max_fitness_value=max_fitness_value,
-)
-
-random_hill_chart_lineplot(rh_knapsack_values, title="Knapsack")
-random_hill_chart_heatmap(rh_knapsack_values, title="Knapsack")
-
-color_problem, max_fitness_value, min_fitness_value = get_k_colors_problem()
-total_iterations = 50
-repetions_per_iteration = 100
-maximize = False
-rh_color_values, max_fitness_value_at_length = random_hill(
-    color_problem,
-    total_iterations=total_iterations,
-    repetions_per_iteration=repetions_per_iteration,
-    maximize=maximize,
-    max_fitness_value=max_fitness_value,
-    min_fitness_value=min_fitness_value,
-)
-
-random_hill_chart_lineplot(rh_color_values, title="2 Color Problem", maximize=maximize)
-random_hill_chart_heatmap(rh_color_values, title="2 Color Problem", maximize=maximize)
-
-
-## SIMULATED ANNEALING
 def optimize_decay_schedule(
     problem,
     total_repetitions=3000,
@@ -323,7 +276,7 @@ def optimize_decay_schedule(
                 )
                 fitness_scores[i] = best_fitness
             print(
-                f"max_iters:{max_iters} init_temp:{init_temp:0.2f}  mean:{fitness_scores.mean():7.4f} max:{fitness_scores.max()} min:{fitness_scores.min()}"
+                f"max_iters:{max_iters:3} init_temp:{init_temp:5.2f}  mean:{fitness_scores.mean():7.4f} max:{fitness_scores.max()} min:{fitness_scores.min()}"
             )
 
 
@@ -333,7 +286,6 @@ def iterate_algorithm(
     decay_schedule=None,
     total_iterations=100,
     repetions_per_iteration=1000,
-    maximize=True,
     max_fitness_value=None,
     min_fitness_value=0,
 ):
@@ -347,7 +299,7 @@ def iterate_algorithm(
     overall_min_state = None
     overall_min_fitness = 100000
     rep_values = np.zeros((repetions_per_iteration))
-    print_histogram(0, rep_values, max_value=max_fitness_value, print_header=True)
+    print_histogram(0, rep_values, max_value=max_fitness_value, min_value=min_fitness_value, print_header=True)
     for max_iters in range(total_iterations):
         rep_values = np.zeros((repetions_per_iteration))
         for i in range(repetions_per_iteration):
@@ -375,58 +327,9 @@ def iterate_algorithm(
 
             rep_values[i] = best_fitness
 
-        bin_counts = print_histogram(
-            max_iters, rep_values, max_value=max_fitness_value, min_value=min_fitness_value, maximize=maximize
-        )
+        bin_counts = print_histogram(max_iters, rep_values, max_value=max_fitness_value, min_value=min_fitness_value)
 
         iteration_values.append([max_iters, rep_values.mean(), rep_values, bin_counts])
     print(f"Max {overall_max_fitness}:{overall_max_state}")
     print(f"Min {overall_min_fitness}:{overall_min_state}")
-    return iteration_values, overall_best_fitness
-
-
-four_peaks_problem, max_fitness_value = get_four_peaks_problem()
-
-fp_decay_schedule = mh.GeomDecay(init_temp=0.35, decay=0.99, min_temp=0.0001)
-total_iterations = 100
-repetions_per_iteration = 100
-sa_four_peaks_values, max_fitness_value_at_length = iterate_algorithm(
-    four_peaks_problem, "sa", fp_decay_schedule, max_fitness_value=max_fitness_value, total_iterations=total_iterations
-)
-chart_lineplot(sa_four_peaks_values, title="Four Peaks", suptitle="Simulated Annealing")
-chart_heatmap(sa_four_peaks_values, title="Four Peaks", suptitle="Simulated Annealing")
-
-
-optimize_decay_schedule(four_peaks_problem, max_iters_start=45, max_iters_stop=55)
-
-
-optimize_decay_schedule(
-    four_peaks_problem,
-    max_iters_start=30,
-    max_iters_stop=100,
-    iters_step=10,
-    start_temp=0.35,
-)
-
-optimize_decay_schedule(
-    four_peaks_problem,
-    max_iters_start=70,
-    start_temp=0.4,
-    end_temp=0.1,
-    temp_step=-0.05,
-)
-
-
-T = 0.30
-for t in range(1000):
-    pr = fp_decay_schedule.evaluate(t)
-    T_t = T * 0.99**t
-    pr_1 = math.e ** (-1 / T_t)
-    pr_10 = math.e ** (-10 / T_t)
-    print(f"{t:3}:{pr:6.6f}   T:{T_t:0.6f}  {pr_1:0.6f} {pr_10:0.6f}")
-
-
-for T in range(1, 10):
-    for d in range(-1, -10, -1):
-        pr = math.e ** (d / T)
-        print(f"d:{d} T:{T}  {pr:6.3f}")
+    return iteration_values, overall_max_fitness, overall_min_fitness
