@@ -36,6 +36,10 @@ class MNISTNet(nn.Module):
         self.training_data_loader = kwargs["training_data_loader"]
         self.epoch_count = kwargs["epoch_count"]
 
+        # For external training
+        self.train_inputs, self.train_labels = next(iter(self.training_data_loader))
+        self.state_length = 66790
+
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -55,8 +59,47 @@ class MNISTNet(nn.Module):
         return 0
         return self.check_accuracy(self.cv_data, self.cv_labels)
 
+    def get_state(self):
+        fc1_weight = self.state_dict()["fc1.weight"]
+        fc1_bias = self.state_dict()["fc1.bias"]
+        fc2_weight = self.state_dict()["fc2.weight"]
+        fc2_bias = self.state_dict()["fc2.bias"]
+
+        state = t.cat((fc1_weight.flatten(), fc1_bias, fc2_weight.flatten(), fc2_bias))
+
+        print(state.numpy()[66780:66790])
+
+        return state.numpy()
+
+    def load_state(self, state):
+        load_dict = {}
+        # fc1.weight: torch.Size([84, 784] 65856
+        fc1_weight = state[0:65856]
+        fc1_weight = t.tensor(np.reshape(np.array(fc1_weight), (84, 784)), dtype=t.float32)
+        load_dict["fc1.weight"] = fc1_weight
+
+        # fc1.bias torch.Size([84]) 65940
+        fc1_bias = state[65856:65940]
+        fc1_bias = t.tensor(np.array(fc1_bias), dtype=t.float32)
+        load_dict["fc1.bias"] = fc1_bias
+
+        # fc2.weight torch.Size([10, 84]) 66780
+        fc2_weight = state[65940:66780]
+        fc2_weight = t.tensor(np.reshape(np.array(fc2_weight), (10, 84)), dtype=t.float32)
+        load_dict["fc2.weight"] = fc2_weight
+
+        # fc2.bias torch.Size([10]) 66790
+        fc2_bias = state[66780:66790]
+        fc2_bias = t.tensor(np.array(fc2_bias), dtype=t.float32)
+        load_dict["fc2.bias"] = fc2_bias
+
+        self.load_state_dict(load_dict)
+
     def train(self):
         epoch_values = []
+        iteration_values = []
+        iteration_count = 0
+        cv_acc = 0
         for epoch in range(self.epoch_count):  # loop over the dataset multiple times
             running_loss = 0.0
             for inputs, labels in self.training_data_loader:
@@ -69,10 +112,22 @@ class MNISTNet(nn.Module):
                 loss.backward()
                 self.optimizer.step()
 
-                # print statistics
+                test_acc = self.check_test_accuracy()
+                iteration_values.append([iteration_count, loss, test_acc])
+                print(f"Iter:{iteration_count:7} loss:{loss:10.4f} test acc:{test_acc:6.3f}")
                 running_loss += loss.item()
-            test_acc = self.check_test_accuracy()
-            cv_acc = self.check_cv_accuracy()
-            print(f"Epoch:{epoch} loss:{running_loss:10.4f} cv acc:{cv_acc:6.3f} test acc:{test_acc:6.3f}")
+                iteration_count += 1
+
+            print("==============================================================")
+            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f}")
+            print("==============================================================")
             epoch_values.append([epoch, running_loss, cv_acc, test_acc])
-        return epoch_values
+        return epoch_values, iteration_values
+
+    def get_state_loss(self):
+        outputs = self(self.train_inputs)
+        loss = self.criterion(outputs, self.train_labels)
+        return loss
+
+    def next_training_data(self):
+        self.train_inputs, self.train_labels = next(iter(self.training_data_loader))

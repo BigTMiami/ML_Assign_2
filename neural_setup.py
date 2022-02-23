@@ -77,17 +77,31 @@ def load_values(network, values):
     network.load_state_dict(load_dict)
 
 
+(
+    train_images_flattened,
+    train_one_hot_labels,
+    train_labels,
+    test_images_flattened,
+    test_one_hot_labels,
+    test_labels,
+) = get_mnist_data_labels_neural()
+mnist = MNISTData(train_images_flattened, train_one_hot_labels)
+mnist_loader = DataLoader(mnist, batch_size=100, shuffle=True)
+
 net = MNISTNet(
     training_data_loader=mnist_loader, test_data=test_images_flattened, test_labels=test_labels, epoch_count=5
 )
-net.check_test_accuracy()
-start_values = get_values(net)
+
+start_accuracy = net.check_test_accuracy()
+start_state = net.get_state()
 print("++++++++++++++++++++++++++++++++++++++++")
 for i in range(5):
-    results = net.train()
-    get_values(net)
+    epoch_values, iteration_values = net.train()
+    state = net.get_state()
 
 print("++++++++++++++++++++++++++++++++++++++++")
-start_values[66780:66790]
-load_values(net, start_values)
-net.check_test_accuracy()
+start_state[66780:66790]
+net.load_state(start_state)
+end_accuracy = net.check_test_accuracy()
+
+print(f"Start:{start_accuracy:0.4f} End:{end_accuracy:0.4f}")
