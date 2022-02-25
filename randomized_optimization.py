@@ -11,14 +11,12 @@ from charting import random_hill_chart_lineplot, random_hill_chart_heatmap, char
 from random import random
 
 
-def get_four_peaks_problem(length=20):
-    threshold_percentage = 0.15
+def get_four_peaks_problem(length=20, threshold_percentage=0.15):
+
     f_four_peaks = mh.FourPeaks(t_pct=threshold_percentage)
 
-    maximum_fitness_values = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36])
-
     four_peaks_problem = mh.DiscreteOpt(length, f_four_peaks)
-    return four_peaks_problem, maximum_fitness_values[length - 1]
+    return four_peaks_problem
 
 
 def get_knapsack_problem(length=20, max_weight_pct=0.35, max_val=2):
