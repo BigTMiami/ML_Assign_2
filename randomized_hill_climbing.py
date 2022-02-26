@@ -1,3 +1,4 @@
+from operator import length_hint
 import six
 import sys
 
@@ -65,21 +66,23 @@ def print_histogram(iteration, values, max_value=None, print_header=False):
     return bins
 
 
-def get_knapsack_problem(length=5, max_weight_pct=0.35):
+def get_knapsack_problem(length=5, max_weight_pct=0.35, seed=None):
+    if seed is not None:
+        np.random.seed(seed)
 
-    master_weights = np.array([11, 10, 18, 16, 17, 7, 14, 15, 17, 10, 17, 15, 4, 12, 8, 3, 12, 15, 14, 2])
-    master_values = np.array([10, 8, 8, 19, 6, 15, 9, 7, 3, 7, 11, 12, 13, 9, 10, 12, 13, 17, 16, 5])
-
-    maximum_fitness_values = np.array([1, 1, 1, 19, 27, 45, 75, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-
-    weights = master_weights[0:length]
-    values = master_values[0:length]
+    max_weight = length
+    max_value = length
+    weights = np.random.randint(1, high=max_weight, size=length)
+    values = np.random.randint(1, high=max_value, size=length)
+    print(weights)
+    print(values)
 
     f_knapsack = mlrose.Knapsack(weights, values, max_weight_pct=max_weight_pct)
     maximize = True
-    max_val = int(sum(weights) * max_weight_pct / min(weights)) + 1
+    # Only use bit strings
+    max_val = 2
     knapsack_problem = mlrose.DiscreteOpt(length, f_knapsack, max_val=max_val, maximize=maximize)
-    return knapsack_problem, maximum_fitness_values[length - 1]
+    return knapsack_problem
 
 
 def get_max_knapsack_fitness_values(start, end):
