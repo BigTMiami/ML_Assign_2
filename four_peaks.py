@@ -49,6 +49,22 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
             print(f"SA needs -temperatures 1 2 3 ")
             return
 
+        if "decays" not in kwargs:
+            print(f"SA needs -decays geom arith exp ")
+            return
+
+        decay_list = []
+        for decay_type in kwargs["decays"]:
+            if decay_type == "geom":
+                decay_list.append(mh.GeomDecay)
+            elif decay_type == "arith":
+                decay_list.append(mh.ArithDecay)
+            elif decay_type == "exp":
+                decay_list.append(mh.ExpDecay)
+            else:
+                print(f"Unsupported decay type {decay_type}")
+                return
+
         sa = mh.SARunner(
             problem=fp_problem,
             experiment_name=experiment_name,
@@ -57,12 +73,16 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
             iteration_list=iteration_list,
             max_attempts=max_attempts,
             temperature_list=kwargs["temperatures"],
+            decay_list=decay_list,
         )
 
         # the two data frames will contain the results
         df_run_stats, df_run_curves = sa.run()
         title = "Simulated Annealing"
-        line_col = "Temperature"
+        if len(decay_list) > 1:
+            line_col = "schedule_type"
+        else:
+            line_col = "Temperature"
 
     elif algorithm_type == "ga":
         if "populations" not in kwargs:
@@ -86,7 +106,10 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
         # the two data frames will contain the results
         df_run_stats, df_run_curves = ga.run()
         title = "Genetic Algorithm"
-        line_col = "Population Size"
+        if len(kwargs["populations"]) > 1:
+            line_col = "Population Size"
+        else:
+            line_col = "Mutation Rate"
 
     elif algorithm_type == "mimic":
         if "keep_percents" not in kwargs:
@@ -110,14 +133,17 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
         # the two data frames will contain the results
         df_run_stats, df_run_curves = mimic.run()
         title = "MIMIC"
-        line_col = "Population Size"
+        if len(kwargs["populations"]) > 1:
+            line_col = "Population Size"
+        else:
+            line_col = "Keep Percent"
 
-    print(f"IN MAIN: {line_col}")
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
     fitness_chart(df, line_col, title=title, sup_title=sup_title)
     run_time = time() - start_time
-    print(f"Run Time of {run_time:0.2f}")
+    max_fitness = df["Fitness"].max()
+    print(f"Max Fitness: {max_fitness} Run Time of {run_time:0.2f}")
 
 
 if __name__ == "__main__":
@@ -128,6 +154,7 @@ if __name__ == "__main__":
     parser.add_argument("length", type=int, help="The algorithm type: rhc, sa, ga, mimic")
     parser.add_argument("-restarts", nargs="+", type=int, help="Each restart value to be used for rhc")
     parser.add_argument("-temperatures", nargs="+", type=int, help="Each start temperature value to be used for sa")
+    parser.add_argument("-decays", nargs="+", type=str, help="Each decay model type to be used for sa")
     parser.add_argument("-populations", nargs="+", type=int, help="Each popuation value to be used for ga")
     parser.add_argument("-mutations", nargs="+", type=float, help="Each mutation value to be used for ga")
     parser.add_argument("-keep_percents", nargs="+", type=float, help="Each keep percent value to be used for mimic")
@@ -144,6 +171,10 @@ if __name__ == "__main__":
     if args.algorithm == "sa":
         if args.temperatures is None:
             print(f"Temperatures must be provided for sa")
+            exit()
+
+        if args.decays is None:
+            print(f"Decays must be provided for sa")
             exit()
 
     if args.algorithm == "ga":
@@ -173,4 +204,5 @@ if __name__ == "__main__":
         populations=args.populations,
         mutations=args.mutations,
         keep_percents=args.keep_percents,
+        decays=args.decays,
     )
