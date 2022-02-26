@@ -72,7 +72,7 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
             print(f"GA needs -mutations 0.1 0.2 0.3")
             return
 
-        sa = mh.GARunner(
+        ga = mh.GARunner(
             problem=fp_problem,
             experiment_name=experiment_name,
             output_directory=output_directory,
@@ -84,10 +84,35 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
         )
 
         # the two data frames will contain the results
-        df_run_stats, df_run_curves = sa.run()
+        df_run_stats, df_run_curves = ga.run()
         title = "Genetic Algorithm"
         line_col = "Population Size"
 
+    elif algorithm_type == "mimic":
+        if "keep_percents" not in kwargs:
+            print(f"MIMIC needs -keep_percents 0.1 0.2 0.3")
+            return
+        if "populations" not in kwargs:
+            print(f"MIMIC needs -populations 50 100 200")
+            return
+
+        mimic = mh.MIMICRunner(
+            problem=fp_problem,
+            experiment_name=experiment_name,
+            output_directory=output_directory,
+            seed=SEED,
+            iteration_list=iteration_list,
+            max_attempts=max_attempts,
+            keep_percent_list=kwargs["keep_percents"],
+            population_sizes=kwargs["populations"],
+        )
+
+        # the two data frames will contain the results
+        df_run_stats, df_run_curves = mimic.run()
+        title = "MIMIC"
+        line_col = "Population Size"
+
+    print(f"IN MAIN: {line_col}")
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
     fitness_chart(df, line_col, title=title, sup_title=sup_title)
@@ -105,6 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("-temperatures", nargs="+", type=int, help="Each start temperature value to be used for sa")
     parser.add_argument("-populations", nargs="+", type=int, help="Each popuation value to be used for ga")
     parser.add_argument("-mutations", nargs="+", type=float, help="Each mutation value to be used for ga")
+    parser.add_argument("-keep_percents", nargs="+", type=float, help="Each keep percent value to be used for mimic")
     parser.add_argument("-max_iterations", type=int, default=500)
     parser.add_argument("-max_attempts", type=int, default=50)
     parser.add_argument("-seed", type=int, default=1)
@@ -122,10 +148,18 @@ if __name__ == "__main__":
 
     if args.algorithm == "ga":
         if args.populations is None:
-            print(f"Populations must be provided for sa")
+            print(f"Populations must be provided for ga")
             exit()
         if args.mutations is None:
-            print(f"Mutations must be provided for sa")
+            print(f"Mutations must be provided for ga")
+            exit()
+
+    if args.algorithm == "mimic":
+        if args.keep_percents is None:
+            print(f"Keep Percents must be provided for mimic")
+            exit()
+        if args.populations is None:
+            print(f"Populations must be provided for mimic")
             exit()
 
     run_four_peaks(
@@ -138,4 +172,5 @@ if __name__ == "__main__":
         temperatures=args.temperatures,
         populations=args.populations,
         mutations=args.mutations,
+        keep_percents=args.keep_percents,
     )
