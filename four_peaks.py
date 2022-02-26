@@ -18,7 +18,7 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
     start_time = time()
 
     output_directory = "experiments/four_peaks"
-    title = "Four Peaks"
+    sup_title = f"Four Peaks (length={length})"
     experiment_name = f"length_{length}"
 
     fp_problem = get_four_peaks_problem(length=length)
@@ -41,7 +41,7 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
 
         # the two data frames will contain the results
         df_run_stats, df_run_curves = rhc.run()
-        sup_title = "Random Hill Climbing"
+        title = "Random Hill Climbing"
         line_col = "Restarts"
 
     elif algorithm_type == "sa":
@@ -61,8 +61,32 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
 
         # the two data frames will contain the results
         df_run_stats, df_run_curves = sa.run()
-        sup_title = "Simulated Annealing"
+        title = "Simulated Annealing"
         line_col = "Temperature"
+
+    elif algorithm_type == "ga":
+        if "populations" not in kwargs:
+            print(f"GA needs -populations 50 100 200")
+            return
+        if "mutations" not in kwargs:
+            print(f"GA needs -mutations 0.1 0.2 0.3")
+            return
+
+        sa = mh.GARunner(
+            problem=fp_problem,
+            experiment_name=experiment_name,
+            output_directory=output_directory,
+            seed=SEED,
+            iteration_list=iteration_list,
+            max_attempts=max_attempts,
+            population_sizes=kwargs["populations"],
+            mutation_rates=kwargs["mutations"],
+        )
+
+        # the two data frames will contain the results
+        df_run_stats, df_run_curves = sa.run()
+        title = "Genetic Algorithm"
+        line_col = "Population Size"
 
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
@@ -79,6 +103,8 @@ if __name__ == "__main__":
     parser.add_argument("length", type=int, help="The algorithm type: rhc, sa, ga, mimic")
     parser.add_argument("-restarts", nargs="+", type=int, help="Each restart value to be used for rhc")
     parser.add_argument("-temperatures", nargs="+", type=int, help="Each start temperature value to be used for sa")
+    parser.add_argument("-populations", nargs="+", type=int, help="Each popuation value to be used for ga")
+    parser.add_argument("-mutations", nargs="+", type=float, help="Each mutation value to be used for ga")
     parser.add_argument("-max_iterations", type=int, default=500)
     parser.add_argument("-max_attempts", type=int, default=50)
     parser.add_argument("-seed", type=int, default=1)
@@ -94,6 +120,14 @@ if __name__ == "__main__":
             print(f"Temperatures must be provided for sa")
             exit()
 
+    if args.algorithm == "ga":
+        if args.populations is None:
+            print(f"Populations must be provided for sa")
+            exit()
+        if args.mutations is None:
+            print(f"Mutations must be provided for sa")
+            exit()
+
     run_four_peaks(
         args.algorithm,
         args.length,
@@ -102,4 +136,6 @@ if __name__ == "__main__":
         max_attempts=args.max_attempts,
         restarts=args.restarts,
         temperatures=args.temperatures,
+        populations=args.populations,
+        mutations=args.mutations,
     )
