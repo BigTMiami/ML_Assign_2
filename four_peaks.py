@@ -24,10 +24,13 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
     fp_problem = get_four_peaks_problem(length=length)
     iteration_list = np.arange(0, max_iterations, max_iterations / 20)
 
+    info_settings = {"l": length, "ma": max_attempts}
+
     if algorithm_type == "rhc":
         if "restarts" not in kwargs:
             print(f"RHC needs -restarts 1 2 3 ")
             return
+        info_settings["r"] = kwargs["restarts"]
 
         rhc = mh.RHCRunner(
             problem=fp_problem,
@@ -65,6 +68,9 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
                 print(f"Unsupported decay type {decay_type}")
                 return
 
+        info_settings["d"] = kwargs["decays"]
+        info_settings["t"] = kwargs["temperatures"]
+
         sa = mh.SARunner(
             problem=fp_problem,
             experiment_name=experiment_name,
@@ -91,6 +97,9 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
         if "mutations" not in kwargs:
             print(f"GA needs -mutations 0.1 0.2 0.3")
             return
+
+        info_settings["p"] = kwargs["populations"]
+        info_settings["mu"] = kwargs["mutations"]
 
         ga = mh.GARunner(
             problem=fp_problem,
@@ -119,6 +128,9 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
             print(f"MIMIC needs -populations 50 100 200")
             return
 
+        info_settings["p"] = kwargs["populations"]
+        info_settings["k"] = kwargs["keep_percents"]
+
         mimic = mh.MIMICRunner(
             problem=fp_problem,
             experiment_name=experiment_name,
@@ -140,10 +152,56 @@ def run_four_peaks(algorithm_type, length, SEED=1, max_iterations=500, max_attem
 
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
-    fitness_chart(df, line_col, title=title, sup_title=sup_title)
+    fitness_chart(df, line_col, title=title, sup_title=sup_title, info_settings=info_settings)
     run_time = time() - start_time
     max_fitness = df["Fitness"].max()
     print(f"Max Fitness: {max_fitness} Run Time of {run_time:0.2f}")
+
+
+def combination_chart(experiment_name):
+    output_directory = "experiments/four_peaks"
+    algorithm_type = "sa"
+    stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
+    df = pd.read_csv(stats_file)
+    max_fitness = df["Fitness"].max()
+    schedule_type = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["schedule_type"].iloc[0]
+    Temperature = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Temperature"].iloc[0]
+    df_sa = df[(df["Temperature"] == Temperature) & (df["schedule_type"] == schedule_type)][["Iteration", "Fitness"]]
+    df_sa["Algorithm Type"] = "Simulated Annealing"
+
+    algorithm_type = "rhc"
+    stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
+    df = pd.read_csv(stats_file)
+    max_fitness = df["Fitness"].max()
+    restarts = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Restarts"].iloc[0]
+    df_rhc = df[df["Restarts"] == restarts][["Iteration", "Fitness"]]
+    df_rhc["Algorithm Type"] = "Random Hill Climb"
+
+    algorithm_type = "ga"
+    stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
+    df = pd.read_csv(stats_file)
+    max_fitness = df["Fitness"].max()
+    Population_Size = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Population Size"].iloc[0]
+    Mutation_Rate = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Mutation Rate"].iloc[0]
+    df_ga = df[(df["Population Size"] == Population_Size) & (df["Mutation Rate"] == Mutation_Rate)][
+        ["Iteration", "Fitness"]
+    ]
+    df_ga["Algorithm Type"] = "Genetic Algorithm"
+
+    algorithm_type = "mimic"
+    stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
+    df = pd.read_csv(stats_file)
+    max_fitness = df["Fitness"].max()
+    Population_Size = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Population Size"].iloc[0]
+    Keep_Percent = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Keep Percent"].iloc[0]
+    df_mimic = df[(df["Population Size"] == Population_Size) & (df["Keep Percent"] == Keep_Percent)][
+        ["Iteration", "Fitness"]
+    ]
+    df_mimic["Algorithm Type"] = "MIMIC"
+
+    df_master = pd.concat([df_sa, df_ga, df_rhc, df_mimic])
+    sup_title = f"Four Peaks (length=30)"
+    fitness_chart(df_master, line_col="Algorithm Type", title=f"Review by Algorithm", sup_title=sup_title)
 
 
 if __name__ == "__main__":

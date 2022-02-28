@@ -4,12 +4,18 @@ import os
 import seaborn as sns
 import numpy as np
 import pandas as pd
+import re
 
 
 def title_to_filename(title):
     safe_title = title.replace(" ", "_")
     safe_title = safe_title.replace(":", "_")
     safe_title = safe_title.replace(",", "_")
+    safe_title = safe_title.replace("[", "")
+    safe_title = safe_title.replace("]", "")
+    safe_title = safe_title.replace("(", "")
+    safe_title = safe_title.replace(")", "")
+    safe_title = safe_title.replace("'", "")
     return f"Document/figures/working/{safe_title}.png"
 
 
@@ -20,7 +26,15 @@ def save_to_file(plt, title):
     plt.savefig(fname=filename, bbox_inches="tight")
 
 
-def fitness_chart(df, line_col, title="TITLE", sup_title="SUPTITLE"):
+def dict_to_str(values):
+    dict_string = ""
+    for key, value in values.items():
+        dict_string += f"_{key}_{value}"
+    dict_string += "_"
+    return dict_string
+
+
+def fitness_chart(df, line_col, title="TITLE", sup_title="SUPTITLE", info_settings={}):
     print(line_col)
     df_max = df.groupby(["Iteration", line_col]).agg({"Fitness": "max"}).reset_index()
     color_count = len(pd.unique(df[line_col]))
@@ -29,4 +43,5 @@ def fitness_chart(df, line_col, title="TITLE", sup_title="SUPTITLE"):
     fig.suptitle(sup_title, fontsize=16)
     ax.set_title(title)
     sns.lineplot(data=df_max, x="Iteration", y="Fitness", hue=line_col, palette=palette, ax=ax)
-    save_to_file(plt, sup_title + " " + title)
+    info_settings_str = dict_to_str(info_settings)
+    save_to_file(plt, sup_title + " " + title + info_settings_str)
