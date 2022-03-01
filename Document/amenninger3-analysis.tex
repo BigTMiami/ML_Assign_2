@@ -183,9 +183,51 @@ The MIMIC algorithm was created by Professor Isabell Charles.  It uses a populat
 
 In comparing them all, the Genetic Algorithm provided the maximum fitness in the least amount of iterations, as shown in \textbf{Figure \ref{fig:four_peaks_fitness_comparison_60}}.  This makes sense given the strong locality of the Four Peaks problem.  The MIMIC algorithm is close behind.  Simulated Annealing, which is using a hill climbing model with some exploration, is able to find a comparable solution, but it takes many more iterations.  Finally, Random Hill Climbing is not able to reach a comparable fitness level with only 320 restarts.
 
-\textbf{Figure \ref{fig:four_peaks_walltime_comparison_60}} shows another measure of the algorithms, with the wall time to find the best solutions for each algorithm.  The Genetic Algorithm and Simulated Annealing are quick and roughly equivalent.  While MIMIC had few iterations, it took more than 20 times longer than GA or SA.  Pulling up the rear was Random Hill Climbing, which is slow due to the extended number of iterations it runs.
+\textbf{Figure \ref{fig:four_peaks_walltime_comparison_60}} shows another measure of the algorithms, with the wall time to find the best solutions for each algorithm.  The Genetic Algorithm and Simulated Annealing are quick and roughly equivalent.  While MIMIC had few iterations, it took more than 20 times longer than GA or SA.  Pulling up the rear was Random Hill Climbing, which is slow due to the extended number of iterations it runs with the restarts.
 
-\section{Knapsack}
+\section{Knapsack and Simulated Annealing}
+The Knapsack problem considers a set of items that each have a weight and a value.  The items can be added to the backpack until a threshold is reached, with the fitness score being the sum of the values of the added items.  If the sum of the weights exceeds the threshold, the fitness score drops to zero.  This creates a fitness space with lots of discontinuities near the threshold and many basins of attraction that lead to local maxima instead of the global maxima.   Each item's weight and value was selected in a uniform range between 1 and the total number of items.  The threshold was set to 35\% of the sum of all weights.
+
+The bit strings contain somewhat less locality than the Four Peaks problem, but would expect that many of the high value, low weight items to be easy to identify.  The problem would be significantly harder if items were allowed to be selected multiple times, but was kept as a bit string for comparability to the other problems.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Simulated_Annealing_l_60_ma_180_d_arith_t_5__7__10__12__15__17_.png}
+\caption{Knapsack Simulated Annealing: This shows the fitness curves at different temperatures using an Arithmetic Decay schedule. Each iteration had a maximum of 180 attempts to find a better solution. }
+\label{fig:knapsack_sa}
+\end{figure}
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=30_Simulated_Annealing_l_30_ma_120_d_geom__arith__exp_t_10_.png}
+\caption{Knapsack Simulated Annealing Decay Schedules: This shows the fitness curves using different Decay schedules at a length of 30. Each iteration had a maximum of 120 attempts to find a better solution. }
+\label{fig:knapsack_sa_decay}
+\end{figure}
+
+\textbf{Figure \ref{fig:knapsack_sa}} shows the Simulated Annealing algorithm at a length of 60 at different temperatures using an arithmetic decay schedule.  Testing showed that the arithmetic decay schedule allowed higher values to be reached as it performed more exploration.  This is because the arithmetic decay reduces the temperature more slowly, allowing more likelihood of accepting a candidate instance with a lower fitness than the current instance, which allows it to get out of local maxima.  \textbf{Figure \ref{fig:knapsack_sa_decay}} shows the comparisons of decay schedules for the smallest problem size with bit string length of 30.  The variation in the fitness of the arithmetic shows the exploration as it moves around, exceeding the geometric and exponential decays that reduce exploration quickly.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Genetic_Algorithm_l_60_ma_60_p_50__100__200_mu_0.1_.png}
+\caption{Knapsack Genetic Algorithm: This shows the fitness curves at different population sizes using a mutation rate of 0.1. Each iteration had a maximum of 180 attempts to find a better solution. }
+\label{fig:knapsack_ga}
+\end{figure}
+
+\textbf{Figure \ref{fig:knapsack_ga}} shows the Genetic Algorithm fitness curves at different population sizes.  The Genetic Algorithm performed very strongly on this problem, which is likely due to the binary nature.  Low weight high value items are identified and breed into the next round.  Larger population sizes perform better, as expected.  The algorithm might not perform as well if each item was allowed to be included multiple times because it would become more intwined with other values selected in the state space.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_MIMIC_l_60_ma_360_p_100__200__400__800_k_0.1_.png}
+\caption{Knapsack MIMIC: This shows the fitness curves at different population sizes using a keep percentage of 0.1. Each iteration had a maximum of 360 attempts to find a better solution. }
+\label{fig:knapsack_mimic}
+\end{figure}
+
+\textbf{Figure \ref{fig:knapsack_mimic}} shows the MIMIC fitness curves at different population sizes.   As in the Four Peaks example, the largest population size was not the best performing.  In addition, the algorithm was not able to reach the same maximum fitness levels that SA and GA did.  This problem has a complicated relationship close to the maximum fitness which was hard for the MIMIC algorithm to optimize fully.  However, it is able to quickly get close to the optimum.
+
+Random Hill Climbing struggled with this problem, as would be expected.  Knapsack has many local maxima as well as many discontinuities, which make it hard to successfully hill climb.   At a bit length of 60, the restart rate would have to be enormous to effectively sample enough of the space to find even modest results.
+
+Further review could be done around the weights, values and thresholds.  In this experiment,  a rather wide range for both weights and values(1 to bit length) was used, with items with large weight and low value clearly not in play.  By narrowing the range, finding the global optimum is likely harder.  
+
 
 \section{K Colors}
 

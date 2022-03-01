@@ -24,8 +24,6 @@ def get_knapsack_problem(length=5, max_weight_pct=0.35, seed=None):
     max_value = length
     weights = np.random.randint(1, high=max_weight, size=length)
     values = np.random.randint(1, high=max_value, size=length)
-    print(weights)
-    print(values)
 
     f_knapsack = mh.Knapsack(weights, values, max_weight_pct=max_weight_pct)
     maximize = True
