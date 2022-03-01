@@ -34,11 +34,13 @@ def dict_to_str(values):
     return dict_string
 
 
-def fitness_chart(df, line_col, title="TITLE", sup_title="SUPTITLE", info_settings={}):
+def fitness_chart(df, line_col, title="TITLE", sup_title="SUPTITLE", maximize=True, info_settings={}):
     df_max = df.groupby(["Iteration", line_col]).agg({"Fitness": "max"}).reset_index()
     color_count = len(pd.unique(df[line_col]))
     palette = sns.color_palette("hls", color_count)
     fig, ax = plt.subplots(1, figsize=(4, 5))
+    if not maximize:
+        ax.invert_yaxis()
     fig.suptitle(sup_title, fontsize=16)
     ax.set_title(title)
     sns.lineplot(data=df_max, x="Iteration", y="Fitness", hue=line_col, palette=palette, ax=ax)

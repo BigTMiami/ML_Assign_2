@@ -31,3 +31,18 @@ def get_knapsack_problem(length=5, max_weight_pct=0.35, seed=None):
     max_val = 2
     knapsack_problem = mh.DiscreteOpt(length, f_knapsack, max_val=max_val, maximize=maximize)
     return knapsack_problem
+
+
+def get_k_colors_problem(length, edge_percentage=0.3, seed=None, max_val=2):
+    if seed is not None:
+        np.random.seed(seed)
+
+    edges = []
+    for start in range(length):
+        for end in range(start, length):
+            if np.random.random_sample() < edge_percentage:
+                edges.append((start, end))
+    f_max_k_color = mh.MaxKColor(edges)
+    maximize = False
+    k_color_problem = mh.DiscreteOpt(length, f_max_k_color, max_val=max_val, maximize=maximize)
+    return k_color_problem

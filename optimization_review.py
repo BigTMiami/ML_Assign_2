@@ -5,7 +5,7 @@ import sys
 sys.modules["sklearn.externals.six"] = six
 import mlrose_hiive as mh
 
-from problems import get_four_peaks_problem, get_knapsack_problem
+from problems import get_four_peaks_problem, get_knapsack_problem, get_k_colors_problem
 import numpy as np
 import argparse
 
@@ -17,6 +17,7 @@ from time import time
 def run_algorithm_with_problem(
     problem_type, algorithm_type, length, seed=1, max_iterations=500, max_attempts=50, **kwargs
 ):
+    maximize = True
     start_time = time()
     experiment_name = f"length_{length}"
     iteration_list = np.arange(0, max_iterations, max_iterations / 20)
@@ -29,6 +30,10 @@ def run_algorithm_with_problem(
     elif problem_type == "knapsack":
         sup_title = f"Knapsack (length={length})"
         problem = get_knapsack_problem(length=length, seed=seed)
+    elif problem_type == "k_color":
+        sup_title = f"K Colors (length={length})"
+        problem = get_k_colors_problem(length=length, seed=seed)
+        maximize = False
     else:
         print(f"Unsupported Problem Type of {problem_type}")
         return
@@ -159,10 +164,10 @@ def run_algorithm_with_problem(
 
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
-    fitness_chart(df, line_col, title=title, sup_title=sup_title, info_settings=info_settings)
+    fitness_chart(df, line_col, title=title, sup_title=sup_title, maximize=maximize, info_settings=info_settings)
     run_time = time() - start_time
-    max_fitness = df["Fitness"].max()
-    print(f"Max Fitness: {max_fitness} Run Time of {run_time:0.2f}")
+    best_fitness = df["Fitness"].max() if maximize else df["Fitness"].min()
+    print(f"Max Fitness: {best_fitness} Run Time of {run_time:0.2f}")
 
 
 def combination_chart(experiment_name):

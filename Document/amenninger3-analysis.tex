@@ -121,30 +121,32 @@ This paper first reviews three optimization problems using four different algori
 The core library used in the experiments in this paper is mlrose [3].  This was developed by Georgia Tech students to support this class by providing a comprehensive tools set for reviewing randomized optimization.  I used the mlrose-hiive [2] fork, which has had other students fix bugs and enhance functionality.  All functions take a seed value which allows random functions to be repeated.  This was used and is documented in the code.
 
 \section{Four Peaks and the Genetic Algorithm}
-The Four Peaks problem is a simple problem, with fitness growing as consecutive 0's are added to the beginning of a bit string or consecutive 1's to the end.  In addition, there is a bonus if both the leading 0's and trailing 1's exceed a threshold.  This problem creates a very strong locality in the bit string, which will favor the Genetic Algorithms strength.  The problem was reviewed at 3 bit string sizes.   A length of 30 represents a state size of roughly 1 billion, a length of 60 a state size of 10 raised to the 18th, and a length of 90 a state size of 10 raised to the 27th power.  These are very large state spaces which effectively demonstrate the algorithms strengths. 
-
-The Genetic Algorithm has two key parameters for optimization.  The population size is the number of active states that are considered in each iteration, where each iteration creates a new generation.  The new generation children are  created through combining parts of the bit strings of the previous generation parents with the highest fitness.  The second parameter is a mutation rate, which is a probability whether each bit in the children is randomly changed.  In this algorithm, exploration is created with crossover combinations and mutation and exploitation is governed by selecting only parents with the highest fitness.
-
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length=60_Genetic_Algorithm_l_60_ma_60_p_100__200__400_mu_0.1_.png}
 \caption{Four Peaks Genetic Algorithm:  This shows the fitness curves at different population sizes. Each iteration had a maximum of 60 attempts to find a better solution and a mutation rate of 0.1. }
 \label{fig:four_peaks_ga}
 \end{figure}
 
- \textbf{Figure \ref{fig:four_peaks_ga}} shows the Genetic Algorithm (GA) fitness curve at different population sizes for the Four Peaks problem.  Not surprisingly, the algorithm performs better with larger populations, where there are better chances for breeding successful children.  The algorithm was less sensitive to mutation rates for this problem, with 0.1 performing well, which was then used.
+The Four Peaks problem is a simple problem, with fitness growing as consecutive 0's are added to the beginning of a bit string or consecutive 1's to the end.  In addition, there is a bonus if both the leading 0's and trailing 1's exceed a threshold.  This problem creates a very strong locality in the bit string, which will favor the Genetic Algorithms strength.  The problem was reviewed at 3 bit string sizes.   A length of 30 represents a state size of roughly 1 billion, a length of 60 a state size of 10 raised to the 18th, and a length of 90 a state size of 10 raised to the 27th power.  These are very large state spaces which effectively demonstrate the algorithms strengths. 
 
-\begin{figure}[htb]
+The Genetic Algorithm has two key parameters for optimization.  The population size is the number of active states that are considered in each iteration, where each iteration creates a new generation.  The new generation children are  created through combining parts of the bit strings of the previous generation parents with the highest fitness.  The second parameter is a mutation rate, which is a probability whether each bit in the children is randomly changed.  In this algorithm, exploration is created with crossover combinations and mutation and exploitation is governed by selecting only parents with the highest fitness.
+
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length=60_Simulated_Annealing_l_60_ma_360_d_geom_t_5__10__50__100_.png}
 \caption{Four Peaks Simulated Annealing:  This shows the fitness curves at different temperatures using a Geometric Decay schedule. Each iteration had a maximum of 60 attempts to find a better solution. }
 \label{fig:four_peaks_sa}
 \end{figure}
 
+ \textbf{Figure \ref{fig:four_peaks_ga}} shows the Genetic Algorithm (GA) fitness curve at different population sizes for the Four Peaks problem.  Not surprisingly, the algorithm performs better with larger populations, where there are better chances for breeding successful children.  The algorithm was less sensitive to mutation rates for this problem, with 0.1 performing well, which was then used.
+
+
+
 \textbf{Figure \ref{fig:four_peaks_sa}} shows the fitness curve for Simulated Annealing (SA) for different Temperatures.  The temperature governs how likely a candidate instance will be accepted during an iteration if it is not better than the current state instance.  This allows for exploration instead of only finding instances that are better, which is critical to avoid local maxima.    Higher temperatures allow for more exploration, which was necessary for SA to find reach maximum fitness for this problem.  Candidate neighbors are created by looking at local neighbors which only have one bit difference form the current instance.  Another key parameter is how the temperature is decayed in each iteration.  By slowly lowering the temperature, the algorithm is able to settle into the maximum basin instead of getting trapped in a local basin.  Three decay types considered with Geometric decay, Exponential Decay and Arithmetic Decay.  For this problem Geometric performed best at a length of 60 and was used.
 
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length=60_Random_Hill_Climbing_l_60_ma_120_r_20__40__80__320_.png}
 \caption{Four Peaks Random Hill Climbing: Each iteration had a maximum of 60 attempts to find a better solution. }
@@ -156,7 +158,7 @@ The Random Hill Climbing (RHC) algorithm looks at local candidate neighbors and 
 
 \textbf{Figure \ref{fig:four_peaks_sa}}  shows the results of Random Hill Climbing.  More restarts increases the chance of finding a better solution, but the maximum fitness values are significantly below those of the other algorithms reviewed.
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length=60_MIMIC_l_60_ma_60_p_400__1600__3200__6400_k_0.1_.png}
 \caption{Four Peaks MIMIC:  This shows the fitness curves at different population size. Each iteration had a maximum of 60 attempts to find a better solution. }
@@ -167,14 +169,14 @@ The MIMIC algorithm was created by Professor Isabell Charles.  It uses a populat
 
 \textbf{Figure \ref{fig:four_peaks_mimic}} shows the MIMIC results.  Like the GA, MIMIC uses a population size, keeping only the fittest in successive iterations.  The figure shows that a population size of 6400 performs best, but that 3200 performs the worst.  Another parameter is the top percentage to keep from one iteration to the next.  A Keep Percentage of 0.3 showed reduced performance, with 0.1 used for the population size reviews. 
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length_60_Algorithm_Fitness_Curves_.png}
 \caption{Four Peaks Fitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 60.  }
 \label{fig:four_peaks_fitness_comparison_60}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length_60_Algorithms_by_Time_.png}
 \caption{Four Peaks Wall Time Comparisons: This shows the time taken to reach the maximum fitness of the different algorithms using the best tested settings at a bit string length of 60.  }
@@ -186,36 +188,40 @@ In comparing them all, the Genetic Algorithm provided the maximum fitness in the
 \textbf{Figure \ref{fig:four_peaks_walltime_comparison_60}} shows another measure of the algorithms, with the wall time to find the best solutions for each algorithm.  The Genetic Algorithm and Simulated Annealing are quick and roughly equivalent.  While MIMIC had few iterations, it took more than 20 times longer than GA or SA.  Pulling up the rear was Random Hill Climbing, which is slow due to the extended number of iterations it runs with the restarts.
 
 \section{Knapsack and Simulated Annealing}
-The Knapsack problem considers a set of items that each have a weight and a value.  The items can be added to the backpack until a threshold is reached, with the fitness score being the sum of the values of the added items.  If the sum of the weights exceeds the threshold, the fitness score drops to zero.  This creates a fitness space with lots of discontinuities near the threshold and many basins of attraction that lead to local maxima instead of the global maxima.   Each item's weight and value was selected in a uniform range between 1 and the total number of items.  The threshold was set to 35\% of the sum of all weights.
-
-The bit strings contain somewhat less locality than the Four Peaks problem, but would expect that many of the high value, low weight items to be easy to identify.  The problem would be significantly harder if items were allowed to be selected multiple times, but was kept as a bit string for comparability to the other problems.
-
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Simulated_Annealing_l_60_ma_180_d_arith_t_5__7__10__12__15__17_.png}
 \caption{Knapsack Simulated Annealing: This shows the fitness curves at different temperatures using an Arithmetic Decay schedule. Each iteration had a maximum of 180 attempts to find a better solution. }
 \label{fig:knapsack_sa}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=30_Simulated_Annealing_l_30_ma_120_d_geom__arith__exp_t_10_.png}
 \caption{Knapsack Simulated Annealing Decay Schedules: This shows the fitness curves using different Decay schedules at a length of 30. Each iteration had a maximum of 120 attempts to find a better solution. }
 \label{fig:knapsack_sa_decay}
 \end{figure}
 
-\textbf{Figure \ref{fig:knapsack_sa}} shows the Simulated Annealing algorithm at a length of 60 at different temperatures using an arithmetic decay schedule.  Testing showed that the arithmetic decay schedule allowed higher values to be reached as it performed more exploration.  This is because the arithmetic decay reduces the temperature more slowly, allowing more likelihood of accepting a candidate instance with a lower fitness than the current instance, which allows it to get out of local maxima.  \textbf{Figure \ref{fig:knapsack_sa_decay}} shows the comparisons of decay schedules for the smallest problem size with bit string length of 30.  The variation in the fitness of the arithmetic shows the exploration as it moves around, exceeding the geometric and exponential decays that reduce exploration quickly.
-
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Genetic_Algorithm_l_60_ma_60_p_50__100__200_mu_0.1_.png}
 \caption{Knapsack Genetic Algorithm: This shows the fitness curves at different population sizes using a mutation rate of 0.1. Each iteration had a maximum of 180 attempts to find a better solution. }
 \label{fig:knapsack_ga}
 \end{figure}
 
+The Knapsack problem considers a set of items that each have a weight and a value.  The items can be added to the backpack until a threshold is reached, with the fitness score being the sum of the values of the added items.  If the sum of the weights exceeds the threshold, the fitness score drops to zero.  This creates a fitness space with lots of discontinuities near the threshold and many basins of attraction that lead to local maxima instead of the global maxima.   Each item's weight and value was selected in a uniform range between 1 and the total number of items.  The threshold was set to 35\% of the sum of all weights.
+
+The bit strings contain somewhat less locality than the Four Peaks problem, but would expect that many of the high value, low weight items to be easy to identify.  The problem would be significantly harder if items were allowed to be selected multiple times, but was kept as a bit string for comparability to the other problems.
+
+
+
+\textbf{Figure \ref{fig:knapsack_sa}} shows the Simulated Annealing algorithm at a length of 60 at different temperatures using an arithmetic decay schedule.  Testing showed that the arithmetic decay schedule allowed higher values to be reached as it performed more exploration.  This is because the arithmetic decay reduces the temperature more slowly, allowing more likelihood of accepting a candidate instance with a lower fitness than the current instance, which allows it to get out of local maxima.  \textbf{Figure \ref{fig:knapsack_sa_decay}} shows the comparisons of decay schedules for the smallest problem size with bit string length of 30.  The variation in the fitness of the arithmetic shows the exploration as it moves around, exceeding the geometric and exponential decays that reduce exploration quickly.
+
+
+
 \textbf{Figure \ref{fig:knapsack_ga}} shows the Genetic Algorithm fitness curves at different population sizes.  The Genetic Algorithm performed very strongly on this problem, which is likely due to the binary nature.  Low weight high value items are identified and breed into the next round.  Larger population sizes perform better, as expected.  The algorithm might not perform as well if each item was allowed to be included multiple times because it would become more intwined with other values selected in the state space.
 
-\begin{figure}[htb]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_MIMIC_l_60_ma_360_p_100__200__400__800_k_0.1_.png}
 \caption{Knapsack MIMIC: This shows the fitness curves at different population sizes using a keep percentage of 0.1. Each iteration had a maximum of 360 attempts to find a better solution. }
@@ -229,8 +235,21 @@ Random Hill Climbing struggled with this problem, as would be expected.  Knapsac
 Further review could be done around the weights, values and thresholds.  In this experiment,  a rather wide range for both weights and values(1 to bit length) was used, with items with large weight and low value clearly not in play.  By narrowing the range, finding the global optimum is likely harder.  
 
 
-\section{K Colors}
+\section{K Colors and MIMIC}
 
+\begin{figure}[!h]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length=60_MIMIC_l_60_ma_120_p_400__800__1600__3200_k_0.1_.png}
+\caption{K Colors MIMIC: This shows the fitness curves at different population sizes using a keep percentage of 0.1. Each iteration had a maximum of 120 attempts to find a better solution. }
+\label{fig:kcolor_mimic}
+\end{figure}
+
+
+The K Color problem investigates how a map might be colored so that no contiguous entities use the same color.  It uses a non-directed graph that connects nodes and the fitness function adds one for each edge connecting nodes of the same color.  The goal is to minimize the number of touching colors, so this is a minimization problem instead of a maximization problem.  All algorithms can easily accommodate this by applying a negative to the fitness function.   In using a bit string, we are attempting to arrange two colors to minimize the number of touching similar colors, so we could call this 2 Colors.  My problem generator program creates edges using an edge percentage and each possible edge is then randomly tested.  As in the Knapsack problem, I used a seed for the random generator so that the results are reproducible and comparable between experiments.  I set the edge percentage at 0.35, which provides a complicated topology.  It exhibits some locality, as some edges will connect to nearby bits, but the structure is across the entire bit string.  In addition, the relationship that the structure represents is very straightforward with 2 colors. 
+
+The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  It randomly samples from the input state space in regions that are more likely to contain the global maxima, using a density estimator function with a given threshold.  MIMIC then uses the randomly generated points to improve the density estimation function and raise the threshold, with this process repeating to raise the threshold and find fitter candidates.  MIMIC is especially well fitted to the K Color problem because  it calculates its probabilities using unconditional probabilities of each feature and pair wise conditional probability between each feature pair.  It is that later that matches almost exactly with the structure of the K-Color problem, where the structure is each edge between two features.  
+
+\textbf{Figure \ref{fig:kcolor_mimic}} shows the fitness curves at different population sizes for MIMIC with a K Color problem of length 60.  It is extremely effective, finding the best solution in less than 15 iterations with a population size as small as 1600.  In the Knapsack problem, the MIMIC algorithm was able to narrow down the key features to focus on, but its unconditional and pairwise conditional probabilities were challenged to make sense of a summation function over all selected features. The K Colors problem maps almost directly into MIMIC's internal model as seen in the low iterations needed to find the optimal solution. 
 
 \section{Neural Network Optimization}
 
