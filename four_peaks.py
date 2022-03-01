@@ -10,7 +10,7 @@ import numpy as np
 import argparse
 
 import pandas as pd
-from charting_runner import fitness_chart
+from charting_runner import fitness_chart, time_chart
 from time import time
 
 
@@ -164,6 +164,7 @@ def combination_chart(experiment_name):
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
     max_fitness = df["Fitness"].max()
+    sa_time = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Time"].iloc[0]
     schedule_type = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["schedule_type"].iloc[0]
     Temperature = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Temperature"].iloc[0]
     df_sa = df[(df["Temperature"] == Temperature) & (df["schedule_type"] == schedule_type)][["Iteration", "Fitness"]]
@@ -173,6 +174,7 @@ def combination_chart(experiment_name):
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
     max_fitness = df["Fitness"].max()
+    rhc_time = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Time"].iloc[0]
     restarts = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Restarts"].iloc[0]
     df_rhc = df[df["Restarts"] == restarts][["Iteration", "Fitness"]]
     df_rhc["Algorithm Type"] = "Random Hill Climb"
@@ -181,6 +183,7 @@ def combination_chart(experiment_name):
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
     max_fitness = df["Fitness"].max()
+    ga_time = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Time"].iloc[0]
     Population_Size = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Population Size"].iloc[0]
     Mutation_Rate = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Mutation Rate"].iloc[0]
     df_ga = df[(df["Population Size"] == Population_Size) & (df["Mutation Rate"] == Mutation_Rate)][
@@ -192,6 +195,7 @@ def combination_chart(experiment_name):
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
     max_fitness = df["Fitness"].max()
+    mimic_time = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Time"].iloc[0]
     Population_Size = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Population Size"].iloc[0]
     Keep_Percent = df[df["Fitness"] == max_fitness].sort_values(by=["Iteration"])["Keep Percent"].iloc[0]
     df_mimic = df[(df["Population Size"] == Population_Size) & (df["Keep Percent"] == Keep_Percent)][
@@ -200,8 +204,12 @@ def combination_chart(experiment_name):
     df_mimic["Algorithm Type"] = "MIMIC"
 
     df_master = pd.concat([df_sa, df_ga, df_rhc, df_mimic])
-    sup_title = f"Four Peaks (length=30)"
-    fitness_chart(df_master, line_col="Algorithm Type", title=f"Review by Algorithm", sup_title=sup_title)
+    sup_title = f"Four Peaks ({experiment_name})"
+    fitness_chart(df_master, line_col="Algorithm Type", title=f"Algorithm Fitness Curves", sup_title=sup_title)
+
+    algorithms = ["Simulated Annealing", "Random Hill Climb", "Genetic Algorithm", "MIMIC"]
+    times = [sa_time, rhc_time, ga_time, mimic_time]
+    time_chart(algorithms, times, title=f"Algorithms by Time", sup_title=sup_title)
 
 
 if __name__ == "__main__":
