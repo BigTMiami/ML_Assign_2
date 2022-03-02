@@ -1,10 +1,7 @@
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
 import os
 import seaborn as sns
-import numpy as np
 import pandas as pd
-import re
 
 
 def title_to_filename(title):
@@ -66,16 +63,20 @@ def time_chart(algorithms, times, title="TITLE", sup_title="SUPTITLE", info_sett
     save_to_file(plt, sup_title + " " + title + info_settings_str)
 
 
-def neural_training_chart(scores, start_node=0, title="TITLE", sup_title="SUPTITLE"):
+def neural_training_chart(scores, start_node=0, title="TITLE", sup_title="SUPTITLE", chart_loss=False):
     fig, ax = plt.subplots(1, figsize=(4, 5))
     fig.suptitle(title, fontsize=16)
     x = list(range(start_node, len(scores)))
     ax.set_title(sup_title)
-    # ax.plot(x, scores[start_node:, 1], label="Training Loss")
-    ax.plot(x, 100.0 - scores[start_node:, 2], label="Training Data")
-    ax.plot(x, 100.0 - scores[start_node:, 4], label="Test Data")
-    ax.set_xlabel("Iteration")
-    ax.set_ylabel("Error")
+    if chart_loss:
+        ax.plot(x, scores[start_node:, 1], label="Training Loss")
+        ax.set_ylabel("Loss")
+    else:
+        ax.plot(x, 100.0 - scores[start_node:, 2], label="Training Data")
+        ax.plot(x, 100.0 - scores[start_node:, 4], label="Test Data")
+        ax.set_ylabel("Error")
+    ax.set_xlabel("Epochs")
+
     plt.legend()
 
     save_to_file(plt, sup_title + " " + title)

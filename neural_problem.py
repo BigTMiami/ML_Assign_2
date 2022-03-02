@@ -30,13 +30,35 @@ neural_net = MNISTNet(
     train_acc_labels=train_labels,
     test_data=test_images_flattened,
     test_labels=test_labels,
-    epoch_count=500,
+    epoch_count=100,
+)
+
+epoch_values, iteration_values = neural_net.rhc_train(capture_iteration_values=False)
+epoch_values = np.array(epoch_values)
+neural_training_chart(
+    epoch_values, start_node=0, title="RHC", sup_title="Z Loss Curve 100 Iterations", chart_loss=True
+)
+neural_training_chart(
+    epoch_values, start_node=0, title="RHC", sup_title="Z Error Curve 100 Iterations", chart_loss=False
 )
 
 
-epoch_values, iteration_values = neural_net.train()
+neural_net = MNISTNet(
+    training_data_loader=mnist_loader,
+    train_acc_data=train_images_flattened,
+    train_acc_labels=train_labels,
+    test_data=test_images_flattened,
+    test_labels=test_labels,
+    epoch_count=100,
+)
+epoch_values, iteration_values = neural_net.train(capture_iteration_values=False)
 epoch_values = np.array(epoch_values)
-neural_training_chart(epoch_values, start_node=0, title="TITLE", sup_title="SUPTITLE")
+neural_training_chart(
+    epoch_values, start_node=0, title="Gradient Back Prop", sup_title="Z Loss Curve 100 Iterations", chart_loss=True
+)
+neural_training_chart(
+    epoch_values, start_node=0, title="Gradient Back Prop", sup_title="Z Error Curve 100 Iterations", chart_loss=False
+)
 
 
 def neural_model_train_loss(state, **kwargs):

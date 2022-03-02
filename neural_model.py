@@ -4,6 +4,13 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from torch.utils.data import Dataset
+from time import time
+
+import six
+import sys
+
+sys.modules["sklearn.externals.six"] = six
+import mlrose_hiive as mh
 
 
 class MNISTData(Dataset):
@@ -43,6 +50,12 @@ class MNISTNet(nn.Module):
         self.train_inputs, self.train_labels = next(iter(self.training_data_loader))
         self.state_length = 66790
 
+        # For randomized training
+        self.fitness = mh.CustomFitness(self.get_loss_for_state, problem_type="continuous")
+        self.neural_problem = mh.ContinuousOpt(
+            self.state_length, self.fitness, maximize=False, min_val=-10, max_val=10, step=0.1
+        )
+
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -72,8 +85,6 @@ class MNISTNet(nn.Module):
         fc2_bias = self.state_dict()["fc2.bias"]
 
         state = t.cat((fc1_weight.flatten(), fc1_bias, fc2_weight.flatten(), fc2_bias))
-
-        print(state.numpy()[66780:66790])
 
         return state.numpy()
 
@@ -136,8 +147,112 @@ class MNISTNet(nn.Module):
 
     def get_state_loss(self):
         outputs = self(self.train_inputs)
-        loss = self.criterion(outputs, self.train_labels)
+        loss = self.criterion(outputs, self.train_labels).item()
         return loss
 
     def next_training_data(self):
         self.train_inputs, self.train_labels = next(iter(self.training_data_loader))
+
+    def get_loss_for_state(self, state):
+        self.load_state(state)
+        loss = self.get_state_loss()
+        return loss
+
+    def rhc_train(self, capture_iteration_values=True):
+        cv_acc = 0
+        old_acc = self.check_test_accuracy()
+        old_loss = self.get_state_loss()
+        print(f"Starting Acc:{old_acc:7.4f} Loss:{old_loss}")
+        best_state = self.get_state()
+        epoch_values = []
+        iteration_values = []
+        iteration_count = 0
+        for epoch in range(self.epoch_count):  # loop over the dataset multiple times
+            running_loss = 0.0
+            for i in range(600):
+                best_state, best_fitness, learning_curve = mh.random_hill_climb(
+                    self.neural_problem,
+                    max_attempts=2,
+                    max_iters=20,
+                    restarts=2,
+                    init_state=best_state,
+                    curve=False,
+                )
+                self.load_state(best_state)
+                new_loss = self.get_state_loss()
+                running_loss += new_loss
+
+                if capture_iteration_values:
+                    new_acc = self.check_test_accuracy()
+                    print(
+                        f"{i}: Acc:{new_acc:7.4f}  Acc Improvement:{new_acc - old_acc:10.6f} Loss improvement:{old_loss - best_fitness:10.6f} Check:{new_loss==best_fitness}"
+                    )
+                    iteration_values.append([iteration_count, new_loss, new_acc])
+                    print(f"Iter:{iteration_count:7} loss:{new_loss:10.4f} test acc:{new_acc:6.3f}")
+                    old_acc = new_acc
+                    old_loss = new_loss
+
+                self.next_training_data()
+
+            test_acc = self.check_test_accuracy()
+            train_acc = self.check_train_accuracy()
+            print("==============================================================")
+            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f} train acc:{train_acc:6.3f}")
+            print("==============================================================")
+
+            epoch_values.append([epoch, running_loss, train_acc, cv_acc, test_acc])
+
+        return epoch_values, iteration_values
+
+    def train_with_algorithm(self, algorithm_settings, capture_iteration_values=False):
+        start_time = time()
+        if algorithm_settings["algorithm"] not in ["rhc", "sa", "ga"]:
+            print(f"{algorithm_settings['algorithm']} not a support algorithm type")
+        cv_acc = 0
+        old_acc = self.check_test_accuracy()
+        old_loss = self.get_state_loss()
+
+        best_state = self.get_state()
+        epoch_values = []
+        iteration_values = []
+        iteration_count = 0
+        for epoch in range(algorithm_settings["epochs"]):  # loop over the dataset multiple times
+            running_loss = 0.0
+            for i in range(600):
+                if algorithm_settings["algorithm"] == "rhc":
+                    best_state, best_fitness, _ = mh.random_hill_climb(
+                        self.neural_problem,
+                        max_attempts=algorithm_settings["max_attempts"],
+                        max_iters=algorithm_settings["max_iters"],
+                        restarts=algorithm_settings["restarts"][0],
+                        init_state=best_state,
+                        curve=False,
+                        random_state=algorithm_settings["seed"],
+                    )
+
+                self.load_state(best_state)
+                new_loss = self.get_state_loss()
+                running_loss += new_loss
+
+                if capture_iteration_values:
+                    new_acc = self.check_test_accuracy()
+                    print(
+                        f"{i}: Acc:{new_acc:7.4f}  Acc Improvement:{new_acc - old_acc:10.6f} Loss improvement:{old_loss - best_fitness:10.6f} Check:{new_loss==best_fitness}"
+                    )
+                    iteration_values.append([iteration_count, new_loss, new_acc])
+                    print(f"Iter:{iteration_count:7} loss:{new_loss:10.4f} test acc:{new_acc:6.3f}")
+                    old_acc = new_acc
+                    old_loss = new_loss
+
+                self.next_training_data()
+
+            test_acc = self.check_test_accuracy()
+            train_acc = self.check_train_accuracy()
+            print("==============================================================")
+            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f} train acc:{train_acc:6.3f}")
+            print("==============================================================")
+
+            epoch_values.append([epoch, running_loss, train_acc, cv_acc, test_acc])
+
+        print(f"Trainging time {time() - start_time:.0f} seconds")
+        return epoch_values, iteration_values
