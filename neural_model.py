@@ -30,6 +30,9 @@ class MNISTNet(nn.Module):
         self.test_data = kwargs["test_data"]
         self.test_labels = kwargs["test_labels"]
 
+        self.train_acc_data = kwargs["train_acc_data"]
+        self.train_acc_labels = kwargs["train_acc_labels"]
+
         self.cv_data = None  # kwargs["cv_data"]
         self.cv_labels = None  # kwargs["cv_labels"]
 
@@ -48,7 +51,7 @@ class MNISTNet(nn.Module):
     def check_accuracy(self, input, labels):
         output = self(input)
         _, predictions = t.max(output, 1)
-        correct = (predictions == labels).sum().float()
+        correct = (predictions == labels).sum().float().item()
         acc = 100 * correct / len(labels)
         return acc
 
@@ -58,6 +61,9 @@ class MNISTNet(nn.Module):
     def check_cv_accuracy(self):
         return 0
         return self.check_accuracy(self.cv_data, self.cv_labels)
+
+    def check_train_accuracy(self):
+        return self.check_accuracy(self.train_acc_data, self.train_acc_labels)
 
     def get_state(self):
         fc1_weight = self.state_dict()["fc1.weight"]
@@ -95,7 +101,7 @@ class MNISTNet(nn.Module):
 
         self.load_state_dict(load_dict)
 
-    def train(self):
+    def train(self, capture_iteration_values=False):
         epoch_values = []
         iteration_values = []
         iteration_count = 0
@@ -112,16 +118,20 @@ class MNISTNet(nn.Module):
                 loss.backward()
                 self.optimizer.step()
 
-                test_acc = self.check_test_accuracy()
-                iteration_values.append([iteration_count, loss, test_acc])
-                print(f"Iter:{iteration_count:7} loss:{loss:10.4f} test acc:{test_acc:6.3f}")
+                if capture_iteration_values:
+                    test_acc = self.check_test_accuracy()
+                    iteration_values.append([iteration_count, loss.item(), test_acc])
+                    print(f"Iter:{iteration_count:7} loss:{loss:10.4f} test acc:{test_acc:6.3f}")
                 running_loss += loss.item()
                 iteration_count += 1
 
+            test_acc = self.check_test_accuracy()
+            train_acc = self.check_train_accuracy()
             print("==============================================================")
-            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f}")
+            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f} train acc:{train_acc:6.3f}")
             print("==============================================================")
-            epoch_values.append([epoch, running_loss, cv_acc, test_acc])
+
+            epoch_values.append([epoch, running_loss, train_acc, cv_acc, test_acc])
         return epoch_values, iteration_values
 
     def get_state_loss(self):

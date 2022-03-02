@@ -170,8 +170,13 @@ def run_algorithm_with_problem(
     print(f"Max Fitness: {best_fitness} Run Time of {run_time:0.2f}")
 
 
-def combination_chart(experiment_name):
-    output_directory = "experiments/four_peaks"
+def combination_chart(problem_type, experiment_name, xscale_log=True):
+    problem_dict = {"four_peaks": "Four Peaks", "knapsack": "Knapsack", "k_color": "K Colors"}
+    if problem_type not in problem_dict:
+        print(f"Unsupported problem type of {problem_type}")
+        return
+    problem_name = problem_dict[problem_type]
+    output_directory = f"experiments/{problem_type}"
     algorithm_type = "sa"
     stats_file = f"{output_directory}/{experiment_name}/{algorithm_type}__{experiment_name}__run_stats_df.csv"
     df = pd.read_csv(stats_file)
@@ -216,8 +221,14 @@ def combination_chart(experiment_name):
     df_mimic["Algorithm Type"] = "MIMIC"
 
     df_master = pd.concat([df_sa, df_ga, df_rhc, df_mimic])
-    sup_title = f"Four Peaks ({experiment_name})"
-    fitness_chart(df_master, line_col="Algorithm Type", title=f"Algorithm Fitness Curves", sup_title=sup_title)
+    sup_title = f"{problem_name} ({experiment_name})"
+    fitness_chart(
+        df_master,
+        line_col="Algorithm Type",
+        title=f"Algorithm Fitness Curves",
+        sup_title=sup_title,
+        xscale_log=xscale_log,
+    )
 
     algorithms = ["Simulated Annealing", "Random Hill Climb", "Genetic Algorithm", "MIMIC"]
     times = [sa_time, rhc_time, ga_time, mimic_time]
@@ -290,3 +301,5 @@ if __name__ == "__main__":
         keep_percents=args.keep_percents,
         decays=args.decays,
     )
+
+    print("\a")

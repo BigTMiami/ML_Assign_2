@@ -1,8 +1,5 @@
-from tracemalloc import start
 import six
 import sys
-
-from sklearn.model_selection import learning_curve
 
 sys.modules["sklearn.externals.six"] = six
 import mlrose_hiive as mh
@@ -13,6 +10,7 @@ import numpy as np
 from neural_model import MNISTData, MNISTNet
 from mnist_data_prep import get_mnist_data_labels_neural
 from torch.utils.data import DataLoader
+from charting_runner import neural_training_chart
 
 (
     train_images_flattened,
@@ -27,10 +25,18 @@ mnist = MNISTData(train_images_flattened, train_one_hot_labels)
 mnist_loader = DataLoader(mnist, batch_size=100, shuffle=True)
 
 neural_net = MNISTNet(
-    training_data_loader=mnist_loader, test_data=test_images_flattened, test_labels=test_labels, epoch_count=10
+    training_data_loader=mnist_loader,
+    train_acc_data=train_images_flattened,
+    train_acc_labels=train_labels,
+    test_data=test_images_flattened,
+    test_labels=test_labels,
+    epoch_count=500,
 )
 
-best_state = neural_net.get_state()
+
+epoch_values, iteration_values = neural_net.train()
+epoch_values = np.array(epoch_values)
+neural_training_chart(epoch_values, start_node=0, title="TITLE", sup_title="SUPTITLE")
 
 
 def neural_model_train_loss(state, **kwargs):

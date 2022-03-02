@@ -171,21 +171,21 @@ The MIMIC algorithm was created by Professor Isabell Charles.  It uses a populat
 
 \begin{figure}[!htb]
 \centering
-\includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length_60_Algorithm_Fitness_Curves_.png}
-\caption{Four Peaks Fitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 60.  }
-\label{fig:four_peaks_fitness_comparison_60}
+\includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length_90_Algorithm_Fitness_Curves_.png}
+\caption{Four Peaks Fitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 90.  }
+\label{fig:four_peaks_fitness_comparison_90}
 \end{figure}
 
 \begin{figure}[!htb]
 \centering
-\includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length_60_Algorithms_by_Time_.png}
-\caption{Four Peaks Wall Time Comparisons: This shows the time taken to reach the maximum fitness of the different algorithms using the best tested settings at a bit string length of 60.  }
-\label{fig:four_peaks_walltime_comparison_60}
+\includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length_90_Algorithms_by_Time_.png}
+\caption{Four Peaks Wall Time Comparisons: This shows the time taken to reach the maximum fitness of the different algorithms using the best tested settings at a bit string length of 90.  }
+\label{fig:four_peaks_walltime_comparison_90}
 \end{figure}
 
-In comparing them all, the Genetic Algorithm provided the maximum fitness in the least amount of iterations, as shown in \textbf{Figure \ref{fig:four_peaks_fitness_comparison_60}}.  This makes sense given the strong locality of the Four Peaks problem.  The MIMIC algorithm is close behind.  Simulated Annealing, which is using a hill climbing model with some exploration, is able to find a comparable solution, but it takes many more iterations.  Finally, Random Hill Climbing is not able to reach a comparable fitness level with only 320 restarts.
+For comparing the algorithms, a bit string length of 90 was used, which is a state space that is a billion times greater than the runs used for the review of individual algorithms.  The Genetic Algorithm provided the maximum fitness, as shown in \textbf{Figure \ref{fig:four_peaks_fitness_comparison_90}}, with only slightly more iterations.  This makes sense given the strong locality of the Four Peaks problem which is the Genetic Algorithms strength.  The MIMIC algorithm is close behind, almost reaching the maximum fitness in a few less iterations than GA.  Simulated Annealing, which is using a hill climbing model with some exploration, is able to find a solution of about half the maximum fitness of GA but taking far more iterations, getting overwhelmed by the enormous state space.  Finally, Random Hill Climbing is not able to reach a comparable fitness level, especially since only 500 restarts were used due to time issues, as seen in next in the review of time.
 
-\textbf{Figure \ref{fig:four_peaks_walltime_comparison_60}} shows another measure of the algorithms, with the wall time to find the best solutions for each algorithm.  The Genetic Algorithm and Simulated Annealing are quick and roughly equivalent.  While MIMIC had few iterations, it took more than 20 times longer than GA or SA.  Pulling up the rear was Random Hill Climbing, which is slow due to the extended number of iterations it runs with the restarts.
+\textbf{Figure \ref{fig:four_peaks_walltime_comparison_90}} shows another measure of the algorithms, with the wall time to find the best solutions for each algorithm \emph{(Note that the y axis time scale is logarithmic)}. The Genetic Algorithm is almost 20 times faster than MIMIC, even though MIMIC had fewer iterations.  SA was quite fast in spite of the large number of iterations.  Pulling up the rear was Random Hill Climbing, which is slow due to the extended number of iterations it runs with each restart.
 
 \section{Knapsack and Simulated Annealing}
 \begin{figure}[!htb]
@@ -213,10 +213,7 @@ The Knapsack problem considers a set of items that each have a weight and a valu
 
 The bit strings contain somewhat less locality than the Four Peaks problem, but would expect that many of the high value, low weight items to be easy to identify.  The problem would be significantly harder if items were allowed to be selected multiple times, but was kept as a bit string for comparability to the other problems.
 
-
-
 \textbf{Figure \ref{fig:knapsack_sa}} shows the Simulated Annealing algorithm at a length of 60 at different temperatures using an arithmetic decay schedule.  Testing showed that the arithmetic decay schedule allowed higher values to be reached as it performed more exploration.  This is because the arithmetic decay reduces the temperature more slowly, allowing more likelihood of accepting a candidate instance with a lower fitness than the current instance, which allows it to get out of local maxima.  \textbf{Figure \ref{fig:knapsack_sa_decay}} shows the comparisons of decay schedules for the smallest problem size with bit string length of 30.  The variation in the fitness of the arithmetic shows the exploration as it moves around, exceeding the geometric and exponential decays that reduce exploration quickly.
-
 
 
 \textbf{Figure \ref{fig:knapsack_ga}} shows the Genetic Algorithm fitness curves at different population sizes.  The Genetic Algorithm performed very strongly on this problem, which is likely due to the binary nature.  Low weight high value items are identified and breed into the next round.  Larger population sizes perform better, as expected.  The algorithm might not perform as well if each item was allowed to be included multiple times because it would become more intwined with other values selected in the state space.
@@ -232,14 +229,33 @@ The bit strings contain somewhat less locality than the Four Peaks problem, but 
 
 Random Hill Climbing struggled with this problem, as would be expected.  Knapsack has many local maxima as well as many discontinuities, which make it hard to successfully hill climb.   At a bit length of 60, the restart rate would have to be enormous to effectively sample enough of the space to find even modest results.
 
-Further review could be done around the weights, values and thresholds.  In this experiment,  a rather wide range for both weights and values(1 to bit length) was used, with items with large weight and low value clearly not in play.  By narrowing the range, finding the global optimum is likely harder.  
+Further review could be done around the weights, values and thresholds.  In this experiment,  a rather wide range for both weights and values(1 to bit length) was used, with items with large weight and low value clearly not in play.  By narrowing the range, finding the global optimum is likely harder, because more items can participate close to a maximum .
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length_90_Algorithm_Fitness_Curves__log.png}
+\caption{KnapsackFitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 90. \emph{(Note that the x axis iteration scale is logarithmic)} }
+\label{fig:knapsack_fitness_comparison_90}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length_90_Algorithms_by_Time_.png}
+\caption{Knapsack Wall Time Comparisons: This shows the time taken to reach the maximum fitness of the different algorithms using the best tested settings at a bit string length of 90.  }
+\label{fig:knapsack_walltime_comparison_90}
+\end{figure}
+
+\textbf{Figure \ref{fig:knapsack_fitness_comparison_90}} shows the comparison of all the algorithms for the Knapsack problem using a bit string length of 90 \emph{(Note that the x axis iteration scale is logarithmic)} and \textbf{Figure \ref{fig:knapsack_walltime_comparison_90}} shows the wall time comparison for the different algorithms.  Simulated Annealing is able find a good solution, but not the global maximum in a reasonable amount of time. The state space allows SA to explore its way out of local maxima to find better solutions.  GA was the best performing algorithm, reaching the highest fitness in the shortest time.  As discussed earlier, a tighter range on weights and values might make this problem harder for GA.  Finally, Random Hill Climbing was severely challenged in this state space.  
+
+Random Hill Climbing's significant time requirements led to a modest change to the base mlrose-hiive code.  The maximum attempts parameter of the algorithm considered at each iteration to find a better fitness state originally takes a random neighbor for each attempt.  Since the fitness function is deterministic as it the test for RHC, a neighbor needs to be only tested once.  This is in contrast to Simulated Annealing, where a neighbor could be tested multiple times with different results due to the temperature probability of acceptance.  For all bit string cases, the algorithm considers neighbors as strings with one bit changed, so the number of neighbors is the same as the length of the bit string.  Originally, a maximum attempts much larger than the length could be justified in order to reasonably test all the neighbors for RHC.  This added to the time through extra function calls.  My modification randomized the selection of neighbors, but only allowed them to be selected once.  Thus, maximum attempts could be shortened to the length of the bit string.  This was used for RHC in the K Colors problem. 
+
 
 
 \section{K Colors and MIMIC}
 
-\begin{figure}[!h]
+\begin{figure}[!htb]
 \centering
-\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length=60_MIMIC_l_60_ma_120_p_400__800__1600__3200_k_0.1_.png}
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length=60_MIMIC_l_60_ma_120_p_400__800__1600__3200__6400__12800_k_0.1_.png}
 \caption{K Colors MIMIC: This shows the fitness curves at different population sizes using a keep percentage of 0.1. Each iteration had a maximum of 120 attempts to find a better solution. }
 \label{fig:kcolor_mimic}
 \end{figure}
@@ -249,7 +265,36 @@ The K Color problem investigates how a map might be colored so that no contiguou
 
 The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  It randomly samples from the input state space in regions that are more likely to contain the global maxima, using a density estimator function with a given threshold.  MIMIC then uses the randomly generated points to improve the density estimation function and raise the threshold, with this process repeating to raise the threshold and find fitter candidates.  MIMIC is especially well fitted to the K Color problem because  it calculates its probabilities using unconditional probabilities of each feature and pair wise conditional probability between each feature pair.  It is that later that matches almost exactly with the structure of the K-Color problem, where the structure is each edge between two features.  
 
-\textbf{Figure \ref{fig:kcolor_mimic}} shows the fitness curves at different population sizes for MIMIC with a K Color problem of length 60.  It is extremely effective, finding the best solution in less than 15 iterations with a population size as small as 1600.  In the Knapsack problem, the MIMIC algorithm was able to narrow down the key features to focus on, but its unconditional and pairwise conditional probabilities were challenged to make sense of a summation function over all selected features. The K Colors problem maps almost directly into MIMIC's internal model as seen in the low iterations needed to find the optimal solution. 
+\textbf{Figure \ref{fig:kcolor_mimic}} shows the fitness curves at different population sizes for MIMIC with a K Color problem of length 60  \emph{(Note that the y axis fitness scale is inverted)}.  It is extremely effective, finding the best solution in less than 15 iterations with a population size as small as 1600.  In the Knapsack problem, the MIMIC algorithm was able to narrow down the key features to focus on, but its unconditional and pairwise conditional probabilities were challenged to make sense of a summation function over all selected features. The K Colors problem maps almost directly into MIMIC's internal model as seen in the low iterations needed to find the optimal solution. 
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length=60_Simulated_Annealing_l_60_ma_300_d_geom_t_5__10__15__25__35_.png}
+\caption{K Colors Simulated Annealing: This shows the fitness curves at different temperatures with a geometric decay. Each iteration had a maximum of 120 attempts to find a better solution. }
+\label{fig:kcolor_sa}
+\end{figure}
+
+\textbf{Figure \ref{fig:kcolor_sa}} shows the fitness curve for Simulated Annealing at different temperatures using geometric decay.  The fitness surface for the K Colors problem is relatively smooth and fairly traversable with hill climbing methods.  A high enough temperature allows enough exploration to get out of local maxima, but the smoother surface was most successful using Geometric decay.  Arithmetic decay allowed for too much exploration.
+
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length=60_Genetic_Algorithm_l_60_ma_120_p_400__800__1600__3200_mu_0.1_.png}
+\caption{K Colors Genetic Algorithm: This shows the fitness curves at different population sizes using a mutation rate of 0.1. Each iteration had a maximum of 120 attempts to find a better solution. }
+\label{fig:kcolor_ga}
+\end{figure}
+
+\textbf{Figure \ref{fig:kcolor_ga}} shows the fitness curve for the Genetic Algorithm at different population sizes using a mutation rate of 0.1.   The GA performs very well on this problem, better than I expected because I thought the locality would be less.  Further review could be done to explore the relationship between GA performance and the number of edges.  
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length=60_Random_Hill_Climbing_l_60_ma_60_r_500_.png}
+\caption{K Colors Random Hill Climbing: This shows the fitness curve. Each iteration had a maximum of 60 attempts to find a better solution using the modified mlrose code, testing each neighbor randomly, but only once. }
+\label{fig:kcolor_rhc}
+\end{figure}
+
+\textbf{Figure \ref{fig:kcolor_rhc}} shows the fitness curve for Random Hill Climbing using the modified mlrose code, testing each neighbor randomly, but only once, per iteration.  RHC is challenged by this problem because the state space can be jumpy due to the multiple connections a feature might have with other features, leading to many local maxima.  
+
 
 \section{Neural Network Optimization}
 
