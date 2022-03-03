@@ -120,6 +120,8 @@ This paper first reviews three optimization problems using four different algori
 \section{Introduction}
 The core library used in the experiments in this paper is mlrose [3].  This was developed by Georgia Tech students to support this class by providing a comprehensive tools set for reviewing randomized optimization.  I used the mlrose-hiive [2] fork, which has had other students fix bugs and enhance functionality.  All functions take a seed value which allows random functions to be repeated.  This was used and is documented in the code.
 
+Each problem was reviewed at 3 bit string sizes.   A length of 30 represents a state size of roughly 1 billion, a length of 60 a state size of 10 raised to the 18th, and a length of 90 a state size of 10 raised to the 27th power.  The bit string length of 30 was used to do an original survey of the algorithms and problem.  The 60 bit length was used for tuning and some algorithmic review.  Finally, the bit string length of 90 was used for comparison purposes between the algorithms.  These are very large state spaces which effectively demonstrate the algorithms strengths. 
+
 \section{Four Peaks and the Genetic Algorithm}
 \begin{figure}[!htb]
 \centering
@@ -128,7 +130,7 @@ The core library used in the experiments in this paper is mlrose [3].  This was 
 \label{fig:four_peaks_ga}
 \end{figure}
 
-The Four Peaks problem is a simple problem, with fitness growing as consecutive 0's are added to the beginning of a bit string or consecutive 1's to the end.  In addition, there is a bonus if both the leading 0's and trailing 1's exceed a threshold.  This problem creates a very strong locality in the bit string, which will favor the Genetic Algorithms strength.  The problem was reviewed at 3 bit string sizes.   A length of 30 represents a state size of roughly 1 billion, a length of 60 a state size of 10 raised to the 18th, and a length of 90 a state size of 10 raised to the 27th power.  These are very large state spaces which effectively demonstrate the algorithms strengths. 
+The Four Peaks problem is a simple problem, with fitness growing as consecutive 0's are added to the beginning of a bit string or consecutive 1's to the end.  In addition, there is a bonus if both the leading 0's and trailing 1's exceed a threshold.  This problem creates a very strong locality in the bit string, which will favor the Genetic Algorithms strength.  
 
 The Genetic Algorithm has two key parameters for optimization.  The population size is the number of active states that are considered in each iteration, where each iteration creates a new generation.  The new generation children are  created through combining parts of the bit strings of the previous generation parents with the highest fitness.  The second parameter is a mutation rate, which is a probability whether each bit in the children is randomly changed.  In this algorithm, exploration is created with crossover combinations and mutation and exploitation is governed by selecting only parents with the highest fitness.
 
@@ -234,7 +236,7 @@ Further review could be done around the weights, values and thresholds.  In this
 \begin{figure}[!htb]
 \centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length_90_Algorithm_Fitness_Curves__log.png}
-\caption{KnapsackFitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 90. \emph{(Note that the x axis iteration scale is logarithmic)} }
+\caption{Knapsack Fitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 90. \emph{(Note that the x axis iteration scale is logarithmic)} }
 \label{fig:knapsack_fitness_comparison_90}
 \end{figure}
 
@@ -295,6 +297,22 @@ The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  
 
 \textbf{Figure \ref{fig:kcolor_rhc}} shows the fitness curve for Random Hill Climbing using the modified mlrose code, testing each neighbor randomly, but only once, per iteration.  RHC is challenged by this problem because the state space can be jumpy due to the multiple connections a feature might have with other features, leading to many local maxima.  
 
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length_90_Algorithm_Fitness_Curves_.png}
+\caption{K Colors Fitness Comparisons: This shows the fitness curves of the different algorithms using the best tested settings at a bit string length of 90. \emph{(Note that the y axis fitness scale, lower is better)} }
+\label{fig:kcolor_fitness_comparison_90}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/K_Colors_length_90_Algorithms_by_Time_.png}
+\caption{K Colors Wall Time Comparisons: This shows the time taken to reach the maximum fitness of the different algorithms using the best tested settings at a bit string length of 90.  }
+\label{fig:kcolor_walltime_comparison_90}
+\end{figure}
+
+\textbf{Figure \ref{fig:kcolor_fitness_comparison_90}} shows the comparison of all the algorithms for the K Colors problem using a bit string length of 90 \emph{(Note that the y axis fitness scale, lower is better)} and \textbf{Figure \ref{fig:kcolor_walltime_comparison_90}} shows the wall time comparison for the different algorithms.  MIMIC had the fewest iterations, and was slightly faster than the Genetic Algorithm.  MIMIC's better speed than GA was likely due to its pariticular fit for this problem, having it do fewer iterations.  Simulated Annealing had the most iterations to reach the best fitness, but was the quickest by far, so it would probably be considered the best.  RHC was very challenged by the large state space, taking the longest time and having the worst fitness score.
 
 \section{Neural Network Optimization}
 

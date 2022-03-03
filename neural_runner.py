@@ -3,7 +3,7 @@ import numpy as np
 from neural_model import MNISTData, MNISTNet
 from mnist_data_prep import get_mnist_data_labels_neural
 from torch.utils.data import DataLoader
-from charting_runner import neural_training_chart
+from charting_runner import neural_training_chart, save_run_info
 
 algorithm_dict = {"sa": "Simulated Annealing", "ga": "Genetic Algorithm", "rhc": "Random Hill Climbing"}
 
@@ -74,3 +74,5 @@ if __name__ == "__main__":
         chart_loss=False,
         info_settings={"epoch_count": args.epochs},
     )
+
+    save_run_info(algorithm_settings, training_time, epoch_values)

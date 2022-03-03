@@ -162,54 +162,6 @@ class MNISTNet(nn.Module):
         loss = self.get_state_loss()
         return loss
 
-    def rhc_train(self, capture_iteration_values=True):
-        cv_acc = 0
-        old_acc = self.check_test_accuracy()
-        old_loss = self.get_state_loss()
-        print(f"Starting Acc:{old_acc:7.4f} Loss:{old_loss}")
-        best_state = self.get_state()
-        epoch_values = []
-        iteration_values = []
-        iteration_count = 0
-        np.random.seed(1)
-        for epoch in range(self.epoch_count):  # loop over the dataset multiple times
-            running_loss = 0.0
-            for i in range(600):
-                best_state, best_fitness, learning_curve = mh.random_hill_climb(
-                    self.neural_problem,
-                    max_attempts=2,
-                    max_iters=20,
-                    restarts=2,
-                    init_state=best_state,
-                    curve=False,
-                    random_state=np.random.randint(10000000),
-                )
-                self.load_state(best_state)
-                new_loss = self.get_state_loss()
-                running_loss += new_loss
-
-                if capture_iteration_values:
-                    new_acc = self.check_test_accuracy()
-                    print(
-                        f"{i}: Acc:{new_acc:7.4f}  Acc Improvement:{new_acc - old_acc:10.6f} Loss improvement:{old_loss - best_fitness:10.6f} Check:{new_loss==best_fitness}"
-                    )
-                    iteration_values.append([iteration_count, new_loss, new_acc])
-                    print(f"Iter:{iteration_count:7} loss:{new_loss:10.4f} test acc:{new_acc:6.3f}")
-                    old_acc = new_acc
-                    old_loss = new_loss
-
-                self.next_training_data()
-
-            test_acc = self.check_test_accuracy()
-            train_acc = self.check_train_accuracy()
-            print("==============================================================")
-            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f} train acc:{train_acc:6.3f}")
-            print("==============================================================")
-
-            epoch_values.append([epoch, running_loss, train_acc, cv_acc, test_acc])
-
-        return epoch_values, iteration_values
-
     def train_with_algorithm(self, algorithm_settings, capture_iteration_values=False):
         start_time = time()
         if algorithm_settings["algorithm"] not in ["rhc", "sa", "ga"]:
@@ -239,8 +191,17 @@ class MNISTNet(nn.Module):
                         random_state=np.random.randint(10000000),
                     )
 
-                self.load_state(best_state)
-                new_loss = self.get_state_loss()
+                    self.load_state(best_state)
+                    new_loss = self.get_state_loss()
+
+                elif algorithm_settings["algorithm"] == "backprop":
+
+                    outputs = self(inputs)
+                    loss = self.criterion(outputs, labels)
+                    loss.backward()
+                    self.optimizer.step()
+                    new_loss = loss.item()
+
                 running_loss += new_loss
 
                 if capture_iteration_values:

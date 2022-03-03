@@ -1,10 +1,12 @@
+from fileinput import filename
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
 import pandas as pd
+import pickle
 
 
-def title_to_filename(title, location="Document/figures/working"):
+def title_to_filename(title, location="Document/figures/working", file_ending="png"):
     safe_title = title.replace(" ", "_")
     safe_title = safe_title.replace(":", "_")
     safe_title = safe_title.replace(",", "_")
@@ -14,7 +16,7 @@ def title_to_filename(title, location="Document/figures/working"):
     safe_title = safe_title.replace("(", "")
     safe_title = safe_title.replace(")", "")
     safe_title = safe_title.replace("'", "")
-    return f"{location}/{safe_title}.png"
+    return f"{location}/{safe_title}.{file_ending}"
 
 
 def save_to_file(plt, title, location="Document/figures/working"):
@@ -22,6 +24,47 @@ def save_to_file(plt, title, location="Document/figures/working"):
     if os.path.exists(filename):
         os.remove(filename)
     plt.savefig(fname=filename, bbox_inches="tight")
+
+
+def save_run_info(settings, training_time, epoch_values):
+    settings_copy = settings.copy()
+    if settings["algorithm"] == "rhc":
+        del settings_copy["temperatures"]
+        del settings_copy["decays"]
+        del settings_copy["populations"]
+        del settings_copy["mutations"]
+        del settings_copy["keep_percents"]
+    elif settings["algorithm"] == "sa":
+        del settings_copy["restarts"]
+        del settings_copy["populations"]
+        del settings_copy["mutations"]
+        del settings_copy["keep_percents"]
+    elif settings["algorithm"] == "ga":
+        del settings_copy["restarts"]
+        del settings_copy["temperatures"]
+        del settings_copy["decays"]
+        del settings_copy["populations"]
+        del settings_copy["mutations"]
+    else:
+        print(f"Unsupported Algorithm type {settings['algorithm']}")
+
+    title = "nn_run_info" + dict_to_str(settings_copy)
+    filename = title_to_filename(title, location="Document/figures/neural", file_ending="pkl")
+
+    save_dict = {}
+    save_dict["settings"] = settings_copy
+    save_dict["training_time"] = training_time
+    save_dict["epoch_values"] = epoch_values
+
+    with (open(filename, "wb")) as f:
+        pickle.dump(save_dict, f)
+
+
+def load_run_info(filename):
+    with (open(filename, "rb")) as f:
+        run_info = pickle.load(f)
+
+    return run_info["settings"], run_info["training_time"], run_info["epoch_values"]
 
 
 def dict_to_str(values):
