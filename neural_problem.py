@@ -30,7 +30,7 @@ neural_net = MNISTNet(
     train_acc_labels=train_labels,
     test_data=test_images_flattened,
     test_labels=test_labels,
-    epoch_count=1,
+    epoch_count=5,
 )
 
 epoch_values, iteration_values = neural_net.rhc_train(capture_iteration_values=False)

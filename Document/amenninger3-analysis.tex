@@ -316,11 +316,52 @@ The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  
 
 \section{Neural Network Optimization}
 
-The data set is The MNIST Database of Handwritten Digits [2].  This consists of instances of 28 X 28 greyscale images of the digits 0-9.  One transformation performed was that the values where scaled to 0 to 1, from 0 to 255.  For all but the neural network algorithm,  the images were flattened, creating 784 features, one for each pixel.  There are 60,000 training instances and 10,000 test instances.  I chose this because it is a good comparison to the first data set, with a very different type of data (images), which leads to significantly more features (784).  In addition, each of the features can be thought of as related to each other, as they are all positional in a two dimensional grid, while the first data set features do not have any necessary relation between themselves ie:  age is not related to sex.  
+The data set used for the Neural Network Optimization is the MNIST Database of Handwritten Digits [2].  This consists of instances of 28 X 28 greyscale images of the digits 0-9.  One transformation performed was that the values where scaled to 0 to 1, from 0 to 255.  The images were flattened, creating 784 features, one for each pixel.  There are 60,000 training instances and 10,000 test instances.  The dataset is balanced, with roughly equal numbers of examples for each for the digits.  The features can be thought of as related to each other, as they are all positional in a two dimensional grid, with the flattening making this a bit more challenging to interpret, but clearly a high locality in the features.  
 
-subtle issue - needed to use seed to runner to create random int.  Otherwise, only the same state values were being changed, no progress
+I chose to use my PyTorch model from the first assignment with some changes.  I removed one of the hidden layers to make it more manageable to work with the randomized algorithms, with a structure of 784 inputs fully connected to one hidden layer with 84 nodes, fully connected to an output layer with 10 nodes for one hot encoding.  I used a cross entropy loss because of the use of the one hot output labels.
 
-step in continous problem acts as part of a learning rate, the other being iteration count which determines how many bits might change
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Gradient_Descent_Backpropagation__epoch_count_500_Error_Curve.png}
+\caption{Neural Network Back Propagation Learning Curve: This shows the error rate of the training data and the validation data (test).  The MNIST data is used, flatting the images to 784 features with a network of 84 hidden nodes and 10 one hot outputs for each digit.  }
+\label{fig:nn_gradient_initial}
+\end{figure}
+
+For training, I used random mini-batches of 100 for each iteration of training.  This created 600 iterations to complete an epoch where the model had done a full pass on the data.  I used a learning rate of 0.001 with the SGD optimizer, which uses stochastic gradient descent with momentum.  This is one of the simpler optimizers and a reasonable comparison to the randomized options. The new network performed well, as seen in  \textbf{Figure \ref{fig:nn_gradient_initial}}  using the standard back propagation, reaching accuracy in the test set of ~97\% within 150 iterations.   The networks from the previous assignment performed better, but had two layers, with even better performance using two convolutional layers. 
+
+Making adjustments to the PyTorch model to allow for the randomized algorithms began with creating functions to get the weights and biases from the networks and then load them after optimization.  The first layer had 65856 weights and 84 biases, the second layer had 840 weights and 10 biases, for a total of 66790 features in the state.  This is quite a large set and I expected the learning algorithms to be challenged by it.  Then I needed to expose a fitness function that would take a proposed state.  To accomplish this, the model takes the proposed state, loads it into the network, and returns the cross entropy loss against the current training batch.   Because this was a loss, the optimization problem is for minimization.
+
+Due to the dramatic impact that different random starting states can have, all experiments loaded the network with the same initial random sets of weights and biases.
+
+I then needed to incorporate the randomized algorithms. I used the mlrose-hiive[2] for the three core algorithms.  All problems would need a problem optimizer, in this case for continuous problems. It was set to minimize the solution, with a minimum possible feature value of -10, a maximum of 10 and a step amount for testing neighbors of 0.1.  The 0.1 functions in some way as a learning rate by limiting how much change can happen at once.  The fitness function used was highlighted earlier.
+
+I needed to replace the Back propagation training for each algorithm using the same mini-batch training. I started with Random Hill Climbing (RHC) where the key settings are maximum iterations, maximum attempts and restarts.  I left restarts at 1 to simplify the activity.  For each iteration, RHC would attempt to change 1 feature, increasing or decreasing it by the step amount.  If the change lowered fitness, it was accepted and RHC moved to the next iteration.  If it did not lower fitness, another attempt was made, up to the maximum attempts.  Thus, each training could only change up to the number of iterations out of a total of 66790.  With a setting of 20 iterations, with each epoch having 600 trainings, only 12000 settings could be adjusted each epoch.  This is compared with all weights and biases being updated for each training using back propagation.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Random_Hill_Climbing__algorithm_rhc_epochs_100_restart_1_max_iters_20_max_attempts_10_seed_1_capture_iteration_values_False_Error_Curve.png}
+\caption{Neural Network Random Hill Climbing Learning Curve: This shows the error rate of the training data and the validation data (test).  Random mini batches of 100 were used, creating 600 iterations per epoch.  Random Hill Climbing used 20 iterations with a maximum attempts per iteration of 10 for each iteration.  }
+\label{fig:nn_rhc_initial}
+\end{figure}
+
+Using a setting of 20 iterations and 10 maximum attempts, RHC was very effective in the beginning of training, as shown in \textbf{Figure \ref{fig:nn_gradient_initial}}.  The time per epoch increased by about a factor of 20, which was expected given the significant extra gyrations performed.  My biggest surprise was how well it performed!  While it only gets to an accuracy of about 88-89\%, it does this in about 25-30 epochs, which seems quite quick.  I think the fitness space for neural network is pretty smooth, which means that RHC stands a good chance to climb effectively.  Looking more closely, RHC is changing only about 7 features per iteration, much less than the potential 20, in the beginning of training.  This slowly drops as the training continues and it becomes more difficult to find upward progress.  
+
+Also, I initially attempted to use a seed for the random state of the RHC algorithm to allow for reproducibility.  However, using the same seed caused it to choose the same features each time, preventing learning.  I adjusted this to use the seed to set a random generator for the mlrose algorithm.
+
+Another consideration is how complicated the model is.   The sum of the absolute values of all the weights of the RHC network is 11448.  The back propagation sum was 2245.  The back propagation model is changing almost all the weights at each iteration, but is doing so in a proportional manner that should continue to lessen change.  The RHC makes almost the same change at each iteration, with the only shrinking being the fact it makes fewer changes as training goes along.  Overall, the model with small weights is preferred and will likely generalize better. 
+
+There are several areas that might enhance the RHC model. First, lowering the step might improve performance, similar to lowering the learning rate of back propagation.  More interesting would be to lower the step amount as training progresses,  much as learning rates are often decayed over training.  Another idea would be to increase the maximum attempts as training goes on.  Finding a state with better fitness becomes more difficult as training goes along. With such a large number of features,  this would possibly allow for a better solution.  Finally, tuning of the mini batch setting may also be helpful.  With back propagation, results may often improve with lower learning rates at the expense of more training iterations.  Learning can be slowed by having bigger batches, causing fewer updates per epoch.  
+
+Fundamentally, the challenge that RHC will have is getting stuck in is local minima.  It does not have a structured way to get out of these.  A large step size in a sense might help, by stepping out of local minima, but those same large steps make it unlikely it can perform fine tuned optimization and require it to go to ever larger weights.   
+
+Simulated Annealing at first glance seems to offer some solution to the challenge of local minima found in RHC and initially I expected it to perform better.  Quickly, it became clear that it performed worse.
+
+a - exploration needs to grow at middle of epochs, to much exploration in begining prevents progress, very poor compared to rhc.
+
+10 epochs weight 6919.5
+
+ga - try mini batch size should be bigger, should use entire set each time for loss
 
 Did use Pytorch, run.  Switched over to mlrose
 
