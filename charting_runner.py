@@ -4,20 +4,21 @@ import seaborn as sns
 import pandas as pd
 
 
-def title_to_filename(title):
+def title_to_filename(title, location="Document/figures/working"):
     safe_title = title.replace(" ", "_")
     safe_title = safe_title.replace(":", "_")
     safe_title = safe_title.replace(",", "_")
+    safe_title = safe_title.replace("=", "_")
     safe_title = safe_title.replace("[", "")
     safe_title = safe_title.replace("]", "")
     safe_title = safe_title.replace("(", "")
     safe_title = safe_title.replace(")", "")
     safe_title = safe_title.replace("'", "")
-    return f"Document/figures/working/{safe_title}.png"
+    return f"{location}/{safe_title}.png"
 
 
-def save_to_file(plt, title):
-    filename = title_to_filename(title)
+def save_to_file(plt, title, location="Document/figures/working"):
+    filename = title_to_filename(title, location=location)
     if os.path.exists(filename):
         os.remove(filename)
     plt.savefig(fname=filename, bbox_inches="tight")
@@ -63,7 +64,16 @@ def time_chart(algorithms, times, title="TITLE", sup_title="SUPTITLE", info_sett
     save_to_file(plt, sup_title + " " + title + info_settings_str)
 
 
-def neural_training_chart(scores, start_node=0, title="TITLE", sup_title="SUPTITLE", chart_loss=False):
+def neural_training_chart(
+    scores,
+    start_node=0,
+    title="TITLE",
+    sup_title="SUPTITLE",
+    chart_loss=False,
+    location="Document/figures/neural",
+    info_settings={},
+):
+    info_settings_str = dict_to_str(info_settings)
     fig, ax = plt.subplots(1, figsize=(4, 5))
     fig.suptitle(title, fontsize=16)
     x = list(range(start_node, len(scores)))
@@ -79,4 +89,4 @@ def neural_training_chart(scores, start_node=0, title="TITLE", sup_title="SUPTIT
 
     plt.legend()
 
-    save_to_file(plt, sup_title + " " + title)
+    save_to_file(plt, sup_title + " " + title + info_settings_str, location=location)

@@ -300,6 +300,10 @@ The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  
 
 The data set is The MNIST Database of Handwritten Digits [2].  This consists of instances of 28 X 28 greyscale images of the digits 0-9.  One transformation performed was that the values where scaled to 0 to 1, from 0 to 255.  For all but the neural network algorithm,  the images were flattened, creating 784 features, one for each pixel.  There are 60,000 training instances and 10,000 test instances.  I chose this because it is a good comparison to the first data set, with a very different type of data (images), which leads to significantly more features (784).  In addition, each of the features can be thought of as related to each other, as they are all positional in a two dimensional grid, while the first data set features do not have any necessary relation between themselves ie:  age is not related to sex.  
 
+subtle issue - needed to use seed to runner to create random int.  Otherwise, only the same state values were being changed, no progress
+
+step in continous problem acts as part of a learning rate, the other being iteration count which determines how many bits might change
+
 Did use Pytorch, run.  Switched over to mlrose
 
 

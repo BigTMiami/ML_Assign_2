@@ -113,6 +113,7 @@ class MNISTNet(nn.Module):
         self.load_state_dict(load_dict)
 
     def train(self, capture_iteration_values=False):
+        start_time = time()
         epoch_values = []
         iteration_values = []
         iteration_count = 0
@@ -143,7 +144,10 @@ class MNISTNet(nn.Module):
             print("==============================================================")
 
             epoch_values.append([epoch, running_loss, train_acc, cv_acc, test_acc])
-        return epoch_values, iteration_values
+
+        training_time = time() - start_time
+        print(f"Training time {training_time:.0f} seconds")
+        return training_time, epoch_values, iteration_values
 
     def get_state_loss(self):
         outputs = self(self.train_inputs)
@@ -167,6 +171,7 @@ class MNISTNet(nn.Module):
         epoch_values = []
         iteration_values = []
         iteration_count = 0
+        np.random.seed(1)
         for epoch in range(self.epoch_count):  # loop over the dataset multiple times
             running_loss = 0.0
             for i in range(600):
@@ -177,6 +182,7 @@ class MNISTNet(nn.Module):
                     restarts=2,
                     init_state=best_state,
                     curve=False,
+                    random_state=np.random.randint(10000000),
                 )
                 self.load_state(best_state)
                 new_loss = self.get_state_loss()
@@ -216,8 +222,11 @@ class MNISTNet(nn.Module):
         epoch_values = []
         iteration_values = []
         iteration_count = 0
+        # This primes the random state generator below for reproduceability
+        np.random.seed(algorithm_settings["seed"])
         for epoch in range(algorithm_settings["epochs"]):  # loop over the dataset multiple times
             running_loss = 0.0
+            epoch_start_time = time()
             for i in range(600):
                 if algorithm_settings["algorithm"] == "rhc":
                     best_state, best_fitness, _ = mh.random_hill_climb(
@@ -227,7 +236,7 @@ class MNISTNet(nn.Module):
                         restarts=algorithm_settings["restarts"][0],
                         init_state=best_state,
                         curve=False,
-                        random_state=algorithm_settings["seed"],
+                        random_state=np.random.randint(10000000),
                     )
 
                 self.load_state(best_state)
@@ -246,13 +255,17 @@ class MNISTNet(nn.Module):
 
                 self.next_training_data()
 
+            epoch_time = time() - epoch_start_time
             test_acc = self.check_test_accuracy()
             train_acc = self.check_train_accuracy()
             print("==============================================================")
-            print(f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f} train acc:{train_acc:6.3f}")
+            print(
+                f"Epoch:{epoch:4} loss:{running_loss:10.4f} test acc:{test_acc:6.3f} train acc:{train_acc:6.3f} time:{epoch_time:.0f} s"
+            )
             print("==============================================================")
 
             epoch_values.append([epoch, running_loss, train_acc, cv_acc, test_acc])
 
-        print(f"Trainging time {time() - start_time:.0f} seconds")
-        return epoch_values, iteration_values
+        training_time = time() - start_time
+        print(f"Training time {training_time:.0f} seconds")
+        return training_time, epoch_values, iteration_values

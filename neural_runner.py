@@ -5,6 +5,8 @@ from mnist_data_prep import get_mnist_data_labels_neural
 from torch.utils.data import DataLoader
 from charting_runner import neural_training_chart
 
+algorithm_dict = {"sa": "Simulated Annealing", "ga": "Genetic Algorithm", "rhc": "Random Hill Climbing"}
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Neural Runner")
 
@@ -46,27 +48,29 @@ if __name__ == "__main__":
         epoch_count=args.epochs,
     )
 
-    state = neural_net.get_state()
-    np.save("neural_state_1.npy", state)
-    # initial_state = np.load("neural_state.npy")
-    # neural_net.load_state(initial_state)
+    # state = neural_net.get_state()
+    # np.save("neural_state_1.npy", state)
+    initial_state = np.load("neural_state.npy")
+    neural_net.load_state(initial_state)
 
     print("Starting Training")
-    epoch_values, iteration_values = neural_net.train_with_algorithm(algorithm_settings, capture_iteration_values=True)
+    training_time, epoch_values, iteration_values = neural_net.train_with_algorithm(
+        algorithm_settings, capture_iteration_values=False
+    )
 
     print("Charting Results")
     epoch_values = np.array(epoch_values)
     neural_training_chart(
         epoch_values,
-        start_node=0,
-        title=f'{algorithm_settings["algorithm"]}',
-        sup_title=f"Z Loss Curve {algorithm_settings['epochs']} Epochs",
+        title=f'{algorithm_dict[algorithm_settings["algorithm"]]}',
+        sup_title=f"Loss Curve",
         chart_loss=True,
+        info_settings={"epoch_count": args.epochs},
     )
     neural_training_chart(
         epoch_values,
-        start_node=0,
-        title=f'{algorithm_settings["algorithm"]}',
-        sup_title=f"Z Error Curve {algorithm_settings['epochs']} Epochs",
+        sup_title=f'{algorithm_dict[algorithm_settings["algorithm"]]}',
+        title=f"Error Curve",
         chart_loss=False,
+        info_settings={"epoch_count": args.epochs},
     )
