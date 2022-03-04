@@ -345,7 +345,7 @@ I needed to replace the Back propagation training for each algorithm using the s
 \label{fig:nn_rhc_initial}
 \end{figure}
 
-Using a setting of 20 iterations and 10 maximum attempts, RHC was very effective in the beginning of training, as shown in \textbf{Figure \ref{fig:nn_gradient_initial}}.  The time per epoch increased by about a factor of 20, which was expected given the significant extra gyrations performed.  My biggest surprise was how well it performed!  While it only gets to an accuracy of about 88-89\%, it does this in about 25-30 epochs, which seems quite quick.  I think the fitness space for neural network is pretty smooth, which means that RHC stands a good chance to climb effectively.  Looking more closely, RHC is changing only about 7 features per iteration, much less than the potential 20, in the beginning of training.  This slowly drops as the training continues and it becomes more difficult to find upward progress.  
+Using a setting of 20 iterations and 10 maximum attempts, RHC was very effective in the beginning of training, as shown in \textbf{Figure \ref{fig:nn_gradient_initial}}.  The time per epoch increased by about a factor of 18, which was expected given the significant extra gyrations performed.  My biggest surprise was how well it performed!  While it only gets to an accuracy of about 88-89\%, it does this in about 25-30 epochs, which seems quite quick.  I think the fitness space for neural network is pretty smooth, which means that RHC stands a good chance to climb effectively.  Looking more closely, RHC is changing only about 7 features per iteration, much less than the potential 20, in the beginning of training.  This drops slightly as the training continues and it becomes more difficult to find upward progress.  
 
 Also, I initially attempted to use a seed for the random state of the RHC algorithm to allow for reproducibility.  However, using the same seed caused it to choose the same features each time, preventing learning.  I adjusted this to use the seed to set a random generator for the mlrose algorithm.
 
@@ -372,7 +372,7 @@ Simulated Annealing at first glance seems to offer some solution to the challeng
 \label{fig:nn_sa_adjusted}
 \end{figure}
 
-I added the ability to lower the minimum temperature and another run was done for 50 epochs, using a much lower starting temperature of 0.0001, as seen in  \textbf{Figure \ref{fig:nn_sa_adjusted}}.  This performed much better, but had a weights sum of 14331after just 50 epochs.  It seems like it was still exploring too much, accepting an average of 16 changes our of 20. 
+I added the ability to lower the minimum temperature and another run was done for 50 epochs, using a much lower starting temperature of 0.0001, as seen in  \textbf{Figure \ref{fig:nn_sa_adjusted}}.  This performed much better, but had a weights sum of 14331after just 50 epochs.  It seems like it was still exploring too much, accepting an average of 16 changes our of 20. However, it was a bit faster than RHC, so there might be acceptable trade offs between accuracy and time in some settings.
 
 Simulated Annealing's challenge in this setting is that it uses the same starting temperature for each epoch run.  Temperature decay means initial training mini batches have easier acceptance and higher exploration while later mini batches have lower exploration.  Exploration would ideally would be lower in the initial training epochs to make progress quickly,  higher in the middle epochs to explore the space a bit, then lower again to move towards the best solution, instead of becoming more restrictive inside each epoch, then resetting.
 
@@ -383,17 +383,35 @@ Simulated Annealing's challenge in this setting is that it uses the same startin
 \label{fig:nn_ga}
 \end{figure}
 
-Genetic Algorithms was a big star in the initial optimization problems, but was likely going to be challenged with the neural network.  Earlier, using only bit strings meant that cross over was more likely to be successful because the optimal value for each feature was going to be a 1 or a 0.  With a continuous state, optimal values could be anything, which means randomly switching sections of the state was less likely to be effective.  In addition, the key nature of locality comes to the fore here.  It does not make any sense that we would switch the weights of the last layer with a some sub section of the first layer and expect improvement, especially considering that they impact each other. 
+Genetic Algorithms was a big star in the initial optimization problems, but was likely going to be challenged with the neural network.  Earlier, using only bit strings meant that cross over was more likely to be successful because the optimal value for each feature was going to be a 1 or a 0.  With a continuous state, optimal values could be anything, which means randomly switching sections of the state was less likely to be effective.  In addition, the key nature of locality comes to the fore here.  It does not make any sense that we would switch the weights of the last layer the last layer of another network and expect improvement, as their performance is totally dependent on the first layers of their respective networks. 
 
- \textbf{Figure \ref{fig:nn_ga}} shows GA's challenge.   With error between 84\% and 90\%, it performing barely above chance where we would expect error of 90\%.  Due to crossover, every feature is changing at each iteration step.   The sum of the weights reaches 331,874 after 5 epochs, showing unsupportable growth.  This algorithm takes 70 times longer than RHC or SA, which themselves were 20 times longer than back propagation.
+ \textbf{Figure \ref{fig:nn_ga}} shows GA's challenge.   With error between 84\% and 90\%, it performing barely above chance where we would expect error of 90\%.  The performance variation is probably similar to the random initial states of neural networks, more than any effective learning from GA. Due to crossover, every feature is changing at each iteration step.   The sum of the weights reaches 331,874 after 5 epochs, showing unsupportable growth.  This algorithm takes 70 times longer than RHC or SA, which themselves were 14-18 times longer than back propagation.
  
-I don't have many ideas to improve GA's performance because its fundamental model doesn't make much sense for network weights.  Possibly removing mini batches and training the entire data set in each iteration might help a bit, but I am skeptical.
+I don't have many ideas to improve GA's performance because its fundamental model doesn't make much sense for network weights.  Possibly removing mini batches and training the entire data set in each iteration might help a bit, but I am skeptical.  Another idea would be to create multiple structured crossover points such that the column of inputs, hidden layer and outputs are divided into something like quadrants.  In this model, exchanged elements might retain some ability to decode part of the screen successfully, but because of the full interconnection, this still would have sets of weights mismatched at the quadrants.
 
+\begin{center}
+\begin{table}[!htb]
+\begin{tabular}{||c c c c||} 
+ \hline
+ Algorithm & Accuracy & Epoch (s) & Weights \\ [0.5ex] 
+ \hline\hline
+Back Propagation & 97\% & 1 & 2,245. \\ 
+ \hline
+ RHC & 89\% & 18 & 11,447 \\
+ \hline
+ SA & 87\% & 14 & 14,331 \\
+ \hline
+ GA & 16\% & 1,050 & 331,873 \\
+ \hline
+\end{tabular}
+\caption{Review of Neural Algorithm Performance}
+\label{table:final_neural}
+\end{table}
+\end{center}
 
-Table with best score, times, weights
-
-Did use Pytorch, run.  Switched over to mlrose
-
+ \textbf{Table \ref{table:final_neural}} shows the summary of the algorithms used for optimizing the Neural Network.  Back propagation is clearly the best solution, as expected.  It has a structured and efficient way to adjust all weights using one calculation of loss per iteration.  RHC and SA are very similar and performed better than I expected.  With the high number of nodes and the hidden layer, RHC and SA structured method is able to effectively climb the fitness space.  They both take much longer than Back Propagation, which is understandable given the extra steps they perform, with orders of magnitude more loss calls as they consider different setting.  Their key challenge is that they are likely to get stuck in local minima.  The Genetic Algorithm, the super star of the first part this paper, is completely ineffective at this task.  Its crossover model is unlikely to be successful because combing tuned weights from one network aren't likely to work with different networks weights.
+ 
+ I particularly enjoyed working on the Neural Network part of this project.  Pulling apart the PyTorch model and trying the different optimization models deepened my understanding of neural networks and sharpened my technical abilities with PyTorch.
 
 \section{References}
 \begin{tabular}{l p{2.75in}}
@@ -404,6 +422,6 @@ Did use Pytorch, run.  Switched over to mlrose
 \\
 3 & Hayes, G. (2019). mlrose: Machine Learning, Randomized Optimization and SEarch package for Python. https://github.com/gkhayes/mlrose. Accessed: 2/11/2022.
 \\
-4 & Menninger, A. (2022)  Code created for this experiment https://github.com/gkhayes/mlrose. Accessed: 2/11/2022.
+4 & Menninger, A. (2022)  Code created for this experiment https://github.com/BigTMiami/ML\_Assign\_2  Created: 2022.
 \end{tabular}
 \end{document}

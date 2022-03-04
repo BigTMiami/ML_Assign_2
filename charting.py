@@ -1,149 +1,160 @@
+from fileinput import filename
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
 import os
 import seaborn as sns
-import numpy as np
+import pandas as pd
+import pickle
 
 
-def title_to_filename(title):
+def title_to_filename(title, location="Document/figures/working", file_ending="png"):
     safe_title = title.replace(" ", "_")
     safe_title = safe_title.replace(":", "_")
     safe_title = safe_title.replace(",", "_")
-    return f"Document/figures/working/{safe_title}.png"
+    safe_title = safe_title.replace("=", "_")
+    safe_title = safe_title.replace("[", "")
+    safe_title = safe_title.replace("]", "")
+    safe_title = safe_title.replace("(", "")
+    safe_title = safe_title.replace(")", "")
+    safe_title = safe_title.replace("'", "")
+    return f"{location}/{safe_title}.{file_ending}"
 
 
-def save_to_file(plt, title):
-    filename = title_to_filename(title)
+def save_to_file(plt, title, location="Document/figures/working"):
+    filename = title_to_filename(title, location=location)
     if os.path.exists(filename):
         os.remove(filename)
     plt.savefig(fname=filename, bbox_inches="tight")
 
 
-def random_hill_chart(values, title="FILL IN"):
+def clean_settings(settings, to_string=True):
+    if len(settings) == 0 and to_string:
+        return ""
+    settings_copy = settings.copy()
+
+    if settings["algorithm"] == "rhc":
+        del settings_copy["temperature"]
+        del settings_copy["min_temp"]
+        del settings_copy["decay"]
+        del settings_copy["population"]
+        del settings_copy["mutation"]
+    elif settings["algorithm"] == "sa":
+        del settings_copy["restart"]
+        del settings_copy["population"]
+        del settings_copy["mutation"]
+    elif settings["algorithm"] == "ga":
+        del settings_copy["restart"]
+        del settings_copy["temperature"]
+        del settings_copy["min_temp"]
+        del settings_copy["decay"]
+        del settings_copy["population"]
+        del settings_copy["mutation"]
+    elif settings["algorithm"] == "backprop":
+        del settings_copy["restart"]
+        del settings_copy["temperature"]
+        del settings_copy["min_temp"]
+        del settings_copy["decay"]
+        del settings_copy["population"]
+        del settings_copy["mutation"]
+        del settings_copy["max_iters"]
+        del settings_copy["max_attempts"]
+    else:
+        print(f"Unsupported Algorithm type {settings['algorithm']}")
+
+    del settings_copy["capture_iteration_values"]
+    del settings_copy["algorithm"]
+
+    if to_string:
+        return dict_to_str(settings_copy)
+    else:
+        return settings_copy
+
+
+def save_run_info(settings, training_time, epoch_values):
+
+    settings_str = clean_settings(settings)
+
+    title = "nn_run_info" + settings_str
+    filename = title_to_filename(title, location="Document/figures/neural", file_ending="pkl")
+
+    save_dict = {}
+    save_dict["settings"] = settings
+    save_dict["training_time"] = training_time
+    save_dict["epoch_values"] = epoch_values
+
+    with (open(filename, "wb")) as f:
+        pickle.dump(save_dict, f)
+
+
+def load_run_info(filename):
+    with (open(filename, "rb")) as f:
+        run_info = pickle.load(f)
+
+    return run_info["settings"], run_info["training_time"], run_info["epoch_values"]
+
+
+def dict_to_str(values):
+    dict_string = ""
+    for key, value in values.items():
+        dict_string += f"_{key}_{value}"
+    dict_string += "_"
+    return dict_string
+
+
+def fitness_chart(
+    df, line_col, title="TITLE", sup_title="SUPTITLE", maximize=True, xscale_log=False, info_settings={}
+):
+    df_max = df.groupby(["Iteration", line_col]).agg({"Fitness": "max"}).reset_index()
+    color_count = len(pd.unique(df[line_col]))
+    palette = sns.color_palette("hls", color_count)
     fig, ax = plt.subplots(1, figsize=(4, 5))
-    alogrithm_type = "Random Hill Chart"
-    fig.suptitle(alogrithm_type, fontsize=16)
+    if not maximize:
+        ax.invert_yaxis()
+    if xscale_log:
+        ax.set_xscale("log")
+    fig.suptitle(sup_title, fontsize=16)
     ax.set_title(title)
-    x = [value[0] for value in values]
-    y = [value[1] for value in values]
-    ax.plot(x, y)
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Fitness")
-
-    save_to_file(plt, alogrithm_type + " " + title)
+    sns.lineplot(data=df_max, x="Iteration", y="Fitness", hue=line_col, palette=palette, ax=ax)
+    info_settings_str = dict_to_str(info_settings)
+    log_tag = "_log" if xscale_log else ""
+    save_to_file(plt, sup_title + " " + title + info_settings_str + log_tag)
 
 
-def random_hill_chart_boxplot(values, title="FILL IN"):
+def time_chart(algorithms, times, title="TITLE", sup_title="SUPTITLE", info_settings={}):
+
     fig, ax = plt.subplots(1, figsize=(4, 5))
-    alogrithm_type = "Random Hill Chart"
-    fig.suptitle(alogrithm_type, fontsize=16)
+    fig.suptitle(sup_title, fontsize=16)
     ax.set_title(title)
-    x = [value[2] for value in values]
-    ax.boxplot(x)
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Fitness")
+    sns.barplot(x=algorithms, y=times, ax=ax)
+    ax.set_yscale("log")
+    plt.xticks(rotation=45, horizontalalignment="right", fontweight="light", fontsize="x-large")
+    ax.set_ylabel("Time (s)")
+    info_settings_str = dict_to_str(info_settings)
+    save_to_file(plt, sup_title + " " + title + info_settings_str)
 
-    save_to_file(plt, alogrithm_type + " " + title)
 
-
-def random_hill_chart_seaborn_boxplot(values, title="FILL IN"):
+def neural_training_chart(
+    scores,
+    start_node=0,
+    title="TITLE",
+    sup_title="SUPTITLE",
+    chart_loss=False,
+    location="Document/figures/neural",
+    algorithm_settings={},
+):
+    info_settings_str = clean_settings(algorithm_settings)
     fig, ax = plt.subplots(1, figsize=(4, 5))
-    alogrithm_type = "Random Hill Chart"
-    fig.suptitle(alogrithm_type, fontsize=16)
-    ax.set_title(title)
-    x = [value[0] for value in values]
-    print(x)
-    y = np.array([value[2] for value in values])
-    print(y.shape)
-    print(y[0])
-    # sns.boxplot(data=y, ax=ax, flierprops = dict(markerfacecolor = '0.50', markersize = .1))
-    sns.lineplot(data=y, ax=ax)
-    ax.set_xlabel("Iterations")
-    ax.set_xticks(np.arange(10, len(x), 10))
-    ax.set_ylabel("Fitness")
+    fig.suptitle(title, fontsize=16)
+    x = list(range(start_node, len(scores)))
+    ax.set_title(sup_title)
+    if chart_loss:
+        ax.plot(x, scores[start_node:, 1], label="Training Loss")
+        ax.set_ylabel("Loss")
+    else:
+        ax.plot(x, 100.0 - scores[start_node:, 2], label="Training Data")
+        ax.plot(x, 100.0 - scores[start_node:, 4], label="Test Data")
+        ax.set_ylabel("Error")
+    ax.set_xlabel("Epochs")
 
-    save_to_file(plt, alogrithm_type + " " + title)
+    plt.legend()
 
-
-def random_hill_chart_lineplot(values, title="FILL IN", maximize=True):
-    fig, ax = plt.subplots(1, figsize=(4, 5))
-    alogrithm_type = "Random Hill Chart"
-    fig.suptitle(alogrithm_type, fontsize=16)
-    ax.set_title(title)
-    x_axis = []
-    y_axis = []
-    for value in values:
-        x = value[0]
-        for y in value[2]:
-            x_axis.append(x)
-
-            y_axis.append(y if maximize else -y)
-    sns.lineplot(x=x_axis, y=y_axis, ax=ax)
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Fitness")
-
-    save_to_file(plt, alogrithm_type + " " + title + " lineplot")
-
-
-def chart_lineplot(values, suptitle="FILL IN", title="FILL IN", maximize=True):
-    fig, ax = plt.subplots(1, figsize=(4, 5))
-    fig.suptitle(suptitle, fontsize=16)
-    ax.set_title(title)
-    x_axis = []
-    y_axis = []
-    for value in values:
-        x = value[0]
-        for y in value[2]:
-            x_axis.append(x)
-
-            y_axis.append(y if maximize else -y)
-    sns.lineplot(x=x_axis, y=y_axis, ax=ax)
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Fitness")
-
-    save_to_file(plt, suptitle + " " + title + " lineplot")
-
-
-def random_hill_chart_heatmap(values, title="FILL IN", maximize=True):
-    fig, ax = plt.subplots(1, figsize=(4, 5))
-    alogrithm_type = "Random Hill Chart"
-    fig.suptitle(alogrithm_type, fontsize=16)
-    ax.set_title(title)
-    data = np.array([values[0][3]])
-    for value in values:
-        data = np.append(data, [value[3]], axis=0)
-    data = data.transpose()
-    if maximize:
-        data = np.flip(data, axis=0)
-    y_ticks = ["90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%", "0%"]
-    sns.heatmap(data=data, ax=ax, yticklabels=y_ticks)
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Fitness Percentile vs Maximum")
-    # fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    # ytick_formats = mtick.FormatStrFormatter(fmt)
-    # ax.yaxis.set_major_formatter(ytick_formats)
-    plt.yticks(rotation=0)
-
-    save_to_file(plt, alogrithm_type + " " + title + " heatmap")
-
-
-def chart_heatmap(values, suptitle="FILL IN", title="FILL IN", maximize=True):
-    fig, ax = plt.subplots(1, figsize=(4, 5))
-    fig.suptitle(suptitle, fontsize=16)
-    ax.set_title(title)
-    data = np.array([values[0][3]])
-    for value in values:
-        data = np.append(data, [value[3]], axis=0)
-    data = data.transpose()
-    if maximize:
-        data = np.flip(data, axis=0)
-    y_ticks = ["90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%", "0%"]
-    sns.heatmap(data=data, ax=ax, yticklabels=y_ticks)
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Fitness Percentile vs Maximum")
-    # fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    # ytick_formats = mtick.FormatStrFormatter(fmt)
-    # ax.yaxis.set_major_formatter(ytick_formats)
-    plt.yticks(rotation=0)
-
-    save_to_file(plt, suptitle + " " + title + " heatmap")
+    save_to_file(plt, title + " " + info_settings_str + sup_title, location=location)
