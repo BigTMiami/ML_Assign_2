@@ -16,9 +16,9 @@ Infrastructure Setup
 
 Running the code
 * Section 1
-    * The code can be run from the command line in the project root using an arguement system.  For each of the three supported problems (four_peaks, k_color, knapsack) one of the four supported algorithms should be called (rhc, sa, ga, mimic). A problem length must be included. Below is the basic format:
+    * The code can be run from the command line in the project root using an argument system.  For each of the three supported problems (four_peaks, k_color, knapsack) one of the four supported algorithms should be called (rhc, sa, ga, mimic). A problem length must be included. Below is the basic format:
         python run_opt.py four_peaks sa 20
-    * There are optional argurements that can be set for all algorithms:
+    * There are optional arguments that can be set for all algorithms:
         * -max_iterations 20 
         * -max_attempts 10
         * -seed 1  (Probably don't define this which will default to reproducing the paper results)

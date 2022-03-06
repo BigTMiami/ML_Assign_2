@@ -114,13 +114,19 @@ Assignment 2
 \maketitle
 
 \begin{abstract}
-This paper first reviews three optimization problems using four different algorithms. The algorithms considered are Random Hill Climbing, Simulated Annealing, Genetic Algorithm and MIMIC.  The Four Peaks problem highlights Genetic Algorithm, the K Colors problem highlights MIMIC and the Knapsack Problem highlights Simulated Annealing.  The paper then reviews using Random Hill Climbing, Simulated Annealing, Genetic Algorithm for learning neural network weights for the MNIST image dataset and compares these results to using Back propagation.  
+This paper first reviews three optimization problems using four different algorithms. The algorithms considered are Random Hill Climbing, Simulated Annealing, Genetic Algorithm and MIMIC.  The Four Peaks problem highlights Genetic Algorithm, the K Colors problem highlights MIMIC and the Knapsack Problem highlights Simulated Annealing.  The paper then reviews using Random Hill Climbing, Simulated Annealing, Genetic Algorithm for learning neural network weights for the MNIST image dataset and compares these results to using Gradient Descent and Back Propagation.  
 \end{abstract}
 
 \section{Introduction}
 The core library used in the experiments in this paper is mlrose [3].  This was developed by Georgia Tech students to support this class by providing a comprehensive tools set for reviewing randomized optimization.  I used the mlrose-hiive [2] fork, which has had other students fix bugs and enhance functionality.  All functions take a seed value which allows random functions to be repeated.  This was used and is documented in the code.
 
-Each problem was reviewed at 3 bit string sizes.   A length of 30 represents a state size of roughly 1 billion, a length of 60 a state size of 10 raised to the 18th, and a length of 90 a state size of 10 raised to the 27th power.  The bit string length of 30 was used to do an original survey of the algorithms and problem.  The 60 bit length was used for tuning and some algorithmic review.  Finally, the bit string length of 90 was used for comparison purposes between the algorithms.  These are very large state spaces which effectively demonstrate the algorithms strengths. 
+Each problem was reviewed at 3 bit string sizes.   A length of 30 represents a state size of roughly 1 billion, a length of 60 represents a state size of 10 raised to the 18th, and a length of 90 represents a state size of 10 raised to the 27th power.  The bit string length of 30 was used to do an original survey of the algorithms and problem.  The 60 bit length was used for tuning and individual algorithmic review.  Finally, the bit string length of 90 was used for comparison purposes between the algorithms.  The 90 bit string length is a very large state space which effectively demonstrates each algorithms strengths and weaknesses. 
+
+The Four Peaks problem is a simple problem, with fitness growing as consecutive 0's are added to the beginning of a bit string or consecutive 1's to the end.  In addition, there is a bonus if both the leading 0's and trailing 1's exceed a threshold.  This problem creates a very strong locality in the bit string, which will favor the Genetic Algorithms strength.  
+
+For all algorithms, I first used the 30 bit length for gaining intuition.  At that size, while there were differences, all performed well.
+
+The Genetic Algorithm has two key parameters for optimization.  The population size is the number of active states that are considered in each iteration, where each iteration creates a new generation.  The new generation children are  created through combining parts of the bit strings of the previous generation parents with the highest fitness.  The second parameter is a mutation rate, which is a probability whether each bit in the children is randomly changed.  In this algorithm, exploration is created with crossover combinations and mutation and exploitation is governed by selecting only parents with the highest fitness.
 
 \section{Four Peaks and the Genetic Algorithm}
 \begin{figure}[!htb]
@@ -130,23 +136,7 @@ Each problem was reviewed at 3 bit string sizes.   A length of 30 represents a s
 \label{fig:four_peaks_ga}
 \end{figure}
 
-The Four Peaks problem is a simple problem, with fitness growing as consecutive 0's are added to the beginning of a bit string or consecutive 1's to the end.  In addition, there is a bonus if both the leading 0's and trailing 1's exceed a threshold.  This problem creates a very strong locality in the bit string, which will favor the Genetic Algorithms strength.  
-
-The Genetic Algorithm has two key parameters for optimization.  The population size is the number of active states that are considered in each iteration, where each iteration creates a new generation.  The new generation children are  created through combining parts of the bit strings of the previous generation parents with the highest fitness.  The second parameter is a mutation rate, which is a probability whether each bit in the children is randomly changed.  In this algorithm, exploration is created with crossover combinations and mutation and exploitation is governed by selecting only parents with the highest fitness.
-
-\begin{figure}[!htb]
-\centering
-\includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length=60_Simulated_Annealing_l_60_ma_360_d_geom_t_5__10__50__100_.png}
-\caption{Four Peaks Simulated Annealing:  This shows the fitness curves at different temperatures using a Geometric Decay schedule. Each iteration had a maximum of 60 attempts to find a better solution. }
-\label{fig:four_peaks_sa}
-\end{figure}
-
- \textbf{Figure \ref{fig:four_peaks_ga}} shows the Genetic Algorithm (GA) fitness curve at different population sizes for the Four Peaks problem.  Not surprisingly, the algorithm performs better with larger populations, where there are better chances for breeding successful children.  The algorithm was less sensitive to mutation rates for this problem, with 0.1 performing well, which was then used.
-
-
-
-\textbf{Figure \ref{fig:four_peaks_sa}} shows the fitness curve for Simulated Annealing (SA) for different Temperatures.  The temperature governs how likely a candidate instance will be accepted during an iteration if it is not better than the current state instance.  This allows for exploration instead of only finding instances that are better, which is critical to avoid local maxima.    Higher temperatures allow for more exploration, which was necessary for SA to find reach maximum fitness for this problem.  Candidate neighbors are created by looking at local neighbors which only have one bit difference form the current instance.  Another key parameter is how the temperature is decayed in each iteration.  By slowly lowering the temperature, the algorithm is able to settle into the maximum basin instead of getting trapped in a local basin.  Three decay types considered with Geometric decay, Exponential Decay and Arithmetic Decay.  For this problem Geometric performed best at a length of 60 and was used.
-
+ \textbf{Figure \ref{fig:four_peaks_ga}} shows the Genetic Algorithm (GA) fitness curve at different population sizes for the Four Peaks problem.  Not surprisingly, the algorithm performs better with larger populations, where there are better chances for breeding successful children.  The algorithm was less sensitive to mutation rates for this problem, with 0.1 performing well, which was then used.  For GA, a smooth fitness space is not as important as how likely that the bit string has high locality.
 
 \begin{figure}[!htb]
 \centering
@@ -155,10 +145,22 @@ The Genetic Algorithm has two key parameters for optimization.  The population s
 \label{fig:four_peaks_rhc}
 \end{figure}
 
+The Random Hill Climbing (RHC) algorithm looks at local candidate neighbors and at each iteration accepts the first reviewed with better fitness to the current instance.  If there is none better, it stops.   A key parameter is the number of times the algorithm will restart from different random locations.   Its exploration is limited to the number of random restarts and the number of local neighbors.  It is considered greedy because it only accepts values that are better.
 
-The Random Hill Climbing (RHC) algorithm looks at local candidate neighbors and at each iteration accepts the first reviewed with better fitness to the current instance.  If there is none better, it assumes this is a maximum.   A key parameter is the number of times the algorithm will restart from different random locations.   Its exploration is limited to the number of random restarts and the number of local neighbors.  It is considered greedy because it only accepts values that are better.
+\textbf{Figure \ref{fig:four_peaks_sa}}  shows the results of Random Hill Climbing.  More restarts increases the chance of finding a better solution, but the maximum fitness values are significantly below those of the other algorithms reviewed. RHC's effectiveness is dependent on the smoothness of the fitness space and how many local maxima it contains.
 
-\textbf{Figure \ref{fig:four_peaks_sa}}  shows the results of Random Hill Climbing.  More restarts increases the chance of finding a better solution, but the maximum fitness values are significantly below those of the other algorithms reviewed.
+One possible enhancement to the algorithm would be to check all neighbors and select the best one.  This would no longer be random, but more greedy.  A better possible enhancement would be to look ahead two (or more) steps, and select the node that does the best selection.  This could possibly avoid getting stuck in local maxima.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Four_Peaks_length=60_Simulated_Annealing_l_60_ma_360_d_geom_t_5__10__50__100_.png}
+\caption{Four Peaks Simulated Annealing:  This shows the fitness curves at different temperatures using a Geometric Decay schedule. Each iteration had a maximum of 60 attempts to find a better solution. }
+\label{fig:four_peaks_sa}
+\end{figure}
+
+\textbf{Figure \ref{fig:four_peaks_sa}} shows the fitness curve for Simulated Annealing (SA) for different Temperatures.  The temperature governs how likely a candidate instance will be accepted during an iteration if it is not better than the current state instance.  This allows for exploration instead of only finding instances that are better, which is critical to avoid local maxima.    Higher temperatures allow for more exploration, which was necessary for SA to find reach maximum fitness for this problem.  Candidate neighbors are created by looking at local neighbors which only have one bit difference from the current instance.  Another key parameter is how the temperature is decayed in each iteration.  By slowly lowering the temperature, the algorithm is able to settle into the maximum basin of attraction instead of getting trapped in a local basin.  Three decay types considered were Geometric decay, Exponential Decay and Arithmetic Decay.  For this problem Geometric performed best at a length of 60.
+
+SA works well on the Four Peaks problem because there aren't many maxima and it is able to get out of these traps.
 
 \begin{figure}[!htb]
 \centering
@@ -167,9 +169,9 @@ The Random Hill Climbing (RHC) algorithm looks at local candidate neighbors and 
 \label{fig:four_peaks_mimic}
 \end{figure}
 
-The MIMIC algorithm was created by Professor Isabell Charles.  It uses a population model to create a probability estimation that is refined through each iteration.  The goal is determine underlying structure in the problem through improving the distribution function.
+The MIMIC algorithm was created by Professor Isabell Charles.  It uses a population model to create a probability estimation that is refined through each iteration.  The goal is determine underlying structure in the problem through improving the distribution function and using this distribution to select fitter sample sets.
 
-\textbf{Figure \ref{fig:four_peaks_mimic}} shows the MIMIC results.  Like the GA, MIMIC uses a population size, keeping only the fittest in successive iterations.  The figure shows that a population size of 6400 performs best, but that 3200 performs the worst.  Another parameter is the top percentage to keep from one iteration to the next.  A Keep Percentage of 0.3 showed reduced performance, with 0.1 used for the population size reviews. 
+\textbf{Figure \ref{fig:four_peaks_mimic}} shows the MIMIC results.  Like the GA, MIMIC uses a population size, keeping only the fittest in successive iterations.  The figure shows that a population size of 6,400 performs best with 1,600 better, but that 3,200 performs the worst.  I would expect larger populations to perform better and this may be an artifact of random selection. Another parameter is the percentage to keep of the fittest samples from one iteration to the next.  A Keep Percentage of 0.3 showed reduced performance, and 0.1 showed better performance and was used. 
 
 \begin{figure}[!htb]
 \centering
@@ -185,17 +187,13 @@ The MIMIC algorithm was created by Professor Isabell Charles.  It uses a populat
 \label{fig:four_peaks_walltime_comparison_90}
 \end{figure}
 
-For comparing the algorithms, a bit string length of 90 was used, which is a state space that is a billion times greater than the runs used for the review of individual algorithms.  The Genetic Algorithm provided the maximum fitness, as shown in \textbf{Figure \ref{fig:four_peaks_fitness_comparison_90}}, with only slightly more iterations.  This makes sense given the strong locality of the Four Peaks problem which is the Genetic Algorithms strength.  The MIMIC algorithm is close behind, almost reaching the maximum fitness in a few less iterations than GA.  Simulated Annealing, which is using a hill climbing model with some exploration, is able to find a solution of about half the maximum fitness of GA but taking far more iterations, getting overwhelmed by the enormous state space.  Finally, Random Hill Climbing is not able to reach a comparable fitness level, especially since only 500 restarts were used due to time issues, as seen in next in the review of time.
+For comparing the algorithms, a bit string length of 90 was used, which is a state space that is a billion times greater than the runs of 60 bit length used for the review of individual algorithms.  The Genetic Algorithm provided the maximum fitness, as shown in \textbf{Figure \ref{fig:four_peaks_fitness_comparison_90}}, with only slightly more iterations than MIMIC.  This makes sense given the strong locality of the Four Peaks problem which is the Genetic Algorithms strength.  The MIMIC algorithm is close behind, almost reaching the maximum fitness in a few less iterations than GA.  This makes sense as the problem has a reasonably interpretable structure. 
+
+Simulated Annealing, which is using a hill climbing model with some exploration, is able to find a solution of about half the maximum fitness of GA but taking far more iterations, getting overwhelmed by the enormous state space. Finally, Random Hill Climbing is not able to reach a comparable fitness level, especially since only 500 restarts were used due to time issues, as seen in next in the review of time.
 
 \textbf{Figure \ref{fig:four_peaks_walltime_comparison_90}} shows another measure of the algorithms, with the wall time to find the best solutions for each algorithm \emph{(Note that the y axis time scale is logarithmic)}. The Genetic Algorithm is almost 20 times faster than MIMIC, even though MIMIC had fewer iterations.  SA was quite fast in spite of the large number of iterations.  Pulling up the rear was Random Hill Climbing, which is slow due to the extended number of iterations it runs with each restart.
 
 \section{Knapsack and Simulated Annealing}
-\begin{figure}[!htb]
-\centering
-\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Simulated_Annealing_l_60_ma_180_d_arith_t_5__7__10__12__15__17_.png}
-\caption{Knapsack Simulated Annealing: This shows the fitness curves at different temperatures using an Arithmetic Decay schedule. Each iteration had a maximum of 180 attempts to find a better solution. }
-\label{fig:knapsack_sa}
-\end{figure}
 
 \begin{figure}[!htb]
 \centering
@@ -206,19 +204,25 @@ For comparing the algorithms, a bit string length of 90 was used, which is a sta
 
 \begin{figure}[!htb]
 \centering
+\includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Simulated_Annealing_l_60_ma_180_d_arith_t_5__7__10__12__15__17_.png}
+\caption{Knapsack Simulated Annealing: This shows the fitness curves at different temperatures using an Arithmetic Decay schedule. Each iteration had a maximum of 180 attempts to find a better solution. }
+\label{fig:knapsack_sa}
+\end{figure}
+
+The Knapsack problem considers a set of items that each have a weight and a value.  The items can be added to the backpack until a weight threshold is reached, with the fitness score being the sum of the values of the added items.  If the sum of the weights exceeds the threshold, the fitness score drops to zero.  This creates a fitness space with lots of discontinuities near the threshold and many basins of attraction that lead to local maxima instead of the global maxima.   Each item's weight and value was randomly set using a uniform range between 1 and the total number of items.  The threshold was set to 35\% of the sum of all weights.
+
+The bit strings contain somewhat less locality than the Four Peaks problem, but would expect that many of the high value, low weight items to be easy to identify.  The problem would be significantly harder if items were allowed to be selected multiple times.
+
+\textbf{Figure \ref{fig:knapsack_sa_decay}} shows the comparisons of decay schedules for the smallest problem size with bit string length of 30.  The variation in the fitness of the arithmetic shows the exploration as it moves around, exceeding the geometric and exponential decays that reduce exploration quickly.  The saw toothed patterns show it exploring much more as it moves both up and down the fitness space.  \textbf{Figure \ref{fig:knapsack_sa}} shows the Simulated Annealing algorithm at a length of 60 at different temperatures using an arithmetic decay schedule.  Testing showed that the arithmetic decay schedule allowed higher values to be reached as it performed more exploration.  This is because the arithmetic decay reduces the temperature more slowly, creating more likelihood of accepting a candidate instance with a lower fitness than the current instance, which allows it to get out of local maxima.  
+
+\begin{figure}[!htb]
+\centering
 \includegraphics[width=2.75in, height=2.75in]{figures/Knapsack_length=60_Genetic_Algorithm_l_60_ma_60_p_50__100__200_mu_0.1_.png}
 \caption{Knapsack Genetic Algorithm: This shows the fitness curves at different population sizes using a mutation rate of 0.1. Each iteration had a maximum of 180 attempts to find a better solution. }
 \label{fig:knapsack_ga}
 \end{figure}
 
-The Knapsack problem considers a set of items that each have a weight and a value.  The items can be added to the backpack until a threshold is reached, with the fitness score being the sum of the values of the added items.  If the sum of the weights exceeds the threshold, the fitness score drops to zero.  This creates a fitness space with lots of discontinuities near the threshold and many basins of attraction that lead to local maxima instead of the global maxima.   Each item's weight and value was selected in a uniform range between 1 and the total number of items.  The threshold was set to 35\% of the sum of all weights.
-
-The bit strings contain somewhat less locality than the Four Peaks problem, but would expect that many of the high value, low weight items to be easy to identify.  The problem would be significantly harder if items were allowed to be selected multiple times, but was kept as a bit string for comparability to the other problems.
-
-\textbf{Figure \ref{fig:knapsack_sa}} shows the Simulated Annealing algorithm at a length of 60 at different temperatures using an arithmetic decay schedule.  Testing showed that the arithmetic decay schedule allowed higher values to be reached as it performed more exploration.  This is because the arithmetic decay reduces the temperature more slowly, allowing more likelihood of accepting a candidate instance with a lower fitness than the current instance, which allows it to get out of local maxima.  \textbf{Figure \ref{fig:knapsack_sa_decay}} shows the comparisons of decay schedules for the smallest problem size with bit string length of 30.  The variation in the fitness of the arithmetic shows the exploration as it moves around, exceeding the geometric and exponential decays that reduce exploration quickly.
-
-
-\textbf{Figure \ref{fig:knapsack_ga}} shows the Genetic Algorithm fitness curves at different population sizes.  The Genetic Algorithm performed very strongly on this problem, which is likely due to the binary nature.  Low weight high value items are identified and breed into the next round.  Larger population sizes perform better, as expected.  The algorithm might not perform as well if each item was allowed to be included multiple times because it would become more intwined with other values selected in the state space.
+\textbf{Figure \ref{fig:knapsack_ga}} shows the Genetic Algorithm fitness curves at different population sizes.  The Genetic Algorithm performed very strongly on this problem, which is likely due to its binary nature due to the use of bit strings.  Low weight high value items are identified and breed into the next round.  Larger population sizes perform better, as expected.  The algorithm might not perform as well if each item was allowed to be included multiple times because it would become more intwined with other values selected in the state space.
 
 \begin{figure}[!htb]
 \centering
@@ -227,11 +231,9 @@ The bit strings contain somewhat less locality than the Four Peaks problem, but 
 \label{fig:knapsack_mimic}
 \end{figure}
 
-\textbf{Figure \ref{fig:knapsack_mimic}} shows the MIMIC fitness curves at different population sizes.   As in the Four Peaks example, the largest population size was not the best performing.  In addition, the algorithm was not able to reach the same maximum fitness levels that SA and GA did.  This problem has a complicated relationship close to the maximum fitness which was hard for the MIMIC algorithm to optimize fully.  However, it is able to quickly get close to the optimum.
+\textbf{Figure \ref{fig:knapsack_mimic}} shows the MIMIC fitness curves at different population sizes.   As in the Four Peaks example,  larger population size did not always increase performance.  In addition, the algorithm was not able to reach the same maximum fitness levels that SA and GA did.  This problem has a complicated relationship close to the maximum fitness which was hard for the MIMIC algorithm to optimize fully.  However, it is able to quickly get close to the optimum.
 
 Random Hill Climbing struggled with this problem, as would be expected.  Knapsack has many local maxima as well as many discontinuities, which make it hard to successfully hill climb.   At a bit length of 60, the restart rate would have to be enormous to effectively sample enough of the space to find even modest results.
-
-Further review could be done around the weights, values and thresholds.  In this experiment,  a rather wide range for both weights and values(1 to bit length) was used, with items with large weight and low value clearly not in play.  By narrowing the range, finding the global optimum is likely harder, because more items can participate close to a maximum .
 
 \begin{figure}[!htb]
 \centering
@@ -249,9 +251,9 @@ Further review could be done around the weights, values and thresholds.  In this
 
 \textbf{Figure \ref{fig:knapsack_fitness_comparison_90}} shows the comparison of all the algorithms for the Knapsack problem using a bit string length of 90 \emph{(Note that the x axis iteration scale is logarithmic)} and \textbf{Figure \ref{fig:knapsack_walltime_comparison_90}} shows the wall time comparison for the different algorithms.  Simulated Annealing is able find a good solution, but not the global maximum in a reasonable amount of time. The state space allows SA to explore its way out of local maxima to find better solutions.  GA was the best performing algorithm, reaching the highest fitness in the shortest time.  As discussed earlier, a tighter range on weights and values might make this problem harder for GA.  Finally, Random Hill Climbing was severely challenged in this state space.  
 
-Random Hill Climbing's significant time requirements led to a modest change to the base mlrose-hiive code.  The maximum attempts parameter of the algorithm considered at each iteration to find a better fitness state originally takes a random neighbor for each attempt.  Since the fitness function is deterministic as it the test for RHC, a neighbor needs to be only tested once.  This is in contrast to Simulated Annealing, where a neighbor could be tested multiple times with different results due to the temperature probability of acceptance.  For all bit string cases, the algorithm considers neighbors as strings with one bit changed, so the number of neighbors is the same as the length of the bit string.  Originally, a maximum attempts much larger than the length could be justified in order to reasonably test all the neighbors for RHC.  This added to the time through extra function calls.  My modification randomized the selection of neighbors, but only allowed them to be selected once.  Thus, maximum attempts could be shortened to the length of the bit string.  This was used for RHC in the K Colors problem. 
+Random Hill Climbing's significant time requirements led to a modest change to the base mlrose-hiive code.  The maximum attempts parameter of the algorithm considered at each iteration to find a better fitness state originally takes a random neighbor for each attempt.  Since the fitness function is deterministic as it the test for RHC, a neighbor needs to be only tested once.  This is in contrast to Simulated Annealing, where a neighbor could be tested multiple times with different results due to the temperature probability of acceptance.  For bit string cases, the mlrose optimizer considers neighbors as strings with one bit changed, so the number of neighbors is the same as the length of the bit string.  Originally, a maximum attempts much larger than the length could be justified in order to reasonably test all the neighbors for RHC.  This added to the time through extra function calls.  My modification randomized the selection of neighbors, but only allowed them to be selected once per iteration.  Thus, maximum attempts could be shortened to the length of the bit string, exhausting the neighbors.  This was used for RHC in the K Colors problem. 
 
-
+Further review could be done around the weights, values and thresholds for the Knapsack problem.  In this experiment,  a rather wide range for both weights and values(1 to bit length) was used, with items with large weight and low value clearly not in play.  By narrowing the range, finding the global optimum is likely harder, because more items can participate close to a maximum.
 
 \section{K Colors and MIMIC}
 
@@ -263,11 +265,11 @@ Random Hill Climbing's significant time requirements led to a modest change to t
 \end{figure}
 
 
-The K Color problem investigates how a map might be colored so that no contiguous entities use the same color.  It uses a non-directed graph that connects nodes and the fitness function adds one for each edge connecting nodes of the same color.  The goal is to minimize the number of touching colors, so this is a minimization problem instead of a maximization problem.  All algorithms can easily accommodate this by applying a negative to the fitness function.   In using a bit string, we are attempting to arrange two colors to minimize the number of touching similar colors, so we could call this 2 Colors.  My problem generator program creates edges using an edge percentage and each possible edge is then randomly tested.  As in the Knapsack problem, I used a seed for the random generator so that the results are reproducible and comparable between experiments.  I set the edge percentage at 0.35, which provides a complicated topology.  It exhibits some locality, as some edges will connect to nearby bits, but the structure is across the entire bit string.  In addition, the relationship that the structure represents is very straightforward with 2 colors. 
+The K Color problem investigates how a map might be colored so that no contiguous entities use the same color.  It uses a non-directed graph that connects nodes.  The fitness function adds one for each edge connecting nodes of the same color.  The goal is to minimize the number of touching colors, so this is a minimization problem instead of a maximization problem.  All algorithms can easily accommodate minimization by using the negative of the fitness function.   In using a bit string, we are attempting to arrange two colors to minimize the number of touching similar colors, so we could call this the 2 Colors problem.  My problem generator program creates edges using an edge percentage and each possible edge is then randomly tested.  As in the Knapsack problem, I used a seed for the random generator so that the results are reproducible and comparable between experiments.  I set the edge percentage at 0.35, which provides a complicated topology.  It exhibits some locality, as some edges will connect to nearby bits, but the structure is across the entire bit string.  In addition, the relationship that the structure represents is very straightforward with 2 colors. 
 
-The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  It randomly samples from the input state space in regions that are more likely to contain the global maxima, using a density estimator function with a given threshold.  MIMIC then uses the randomly generated points to improve the density estimation function and raise the threshold, with this process repeating to raise the threshold and find fitter candidates.  MIMIC is especially well fitted to the K Color problem because  it calculates its probabilities using unconditional probabilities of each feature and pair wise conditional probability between each feature pair.  It is that later that matches almost exactly with the structure of the K-Color problem, where the structure is each edge between two features.  
+The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  It randomly samples from the input state space in regions that are more likely to contain the global maxima, using a density estimator function with a given threshold.  MIMIC then uses the randomly generated points to improve the density estimation function and raise the threshold, with this process repeating to raise the threshold and find fitter candidates.  MIMIC is especially well fitted to the K Color problem because  it calculates its probabilities using unconditional probabilities of each feature and pair wise conditional probability between each feature pair.  It is that later that matches almost exactly with the structure of the K-Color problem, where the structure of each edge is between two features.  
 
-\textbf{Figure \ref{fig:kcolor_mimic}} shows the fitness curves at different population sizes for MIMIC with a K Color problem of length 60  \emph{(Note that the y axis fitness scale is inverted)}.  It is extremely effective, finding the best solution in less than 15 iterations with a population size as small as 1600.  In the Knapsack problem, the MIMIC algorithm was able to narrow down the key features to focus on, but its unconditional and pairwise conditional probabilities were challenged to make sense of a summation function over all selected features. The K Colors problem maps almost directly into MIMIC's internal model as seen in the low iterations needed to find the optimal solution. 
+\textbf{Figure \ref{fig:kcolor_mimic}} shows the fitness curves at different population sizes for MIMIC with a K Color problem of length 60  \emph{(Note that the y axis fitness scale is inverted)}.  It is extremely effective, finding the best solution in less than 15 iterations with a population size as small as 1600.  In the Knapsack problem, while the MIMIC algorithm was able to narrow down the key features to focus on, its unconditional and pairwise conditional probabilities were challenged to make sense of a summation function over all selected features. The K Colors problem maps almost directly into MIMIC's internal model as seen in the low iterations needed to find the optimal solution. 
 
 \begin{figure}[!htb]
 \centering
@@ -276,7 +278,7 @@ The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  
 \label{fig:kcolor_sa}
 \end{figure}
 
-\textbf{Figure \ref{fig:kcolor_sa}} shows the fitness curve for Simulated Annealing at different temperatures using geometric decay.  The fitness surface for the K Colors problem is relatively smooth and fairly traversable with hill climbing methods.  A high enough temperature allows enough exploration to get out of local maxima, but the smoother surface was most successful using Geometric decay.  Arithmetic decay allowed for too much exploration.
+\textbf{Figure \ref{fig:kcolor_sa}} shows the fitness curve for Simulated Annealing at different temperatures using geometric decay.  The fitness surface for the K Colors problem is fairly traversable with a high enough temperature to allow enough exploration to get out of local maxima. The problem was most successful using Geometric decay.  Arithmetic decay allowed for too much exploration.
 
 
 \begin{figure}[!htb]
@@ -286,7 +288,7 @@ The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  
 \label{fig:kcolor_ga}
 \end{figure}
 
-\textbf{Figure \ref{fig:kcolor_ga}} shows the fitness curve for the Genetic Algorithm at different population sizes using a mutation rate of 0.1.   The GA performs very well on this problem, better than I expected because I thought the locality would be less.  Further review could be done to explore the relationship between GA performance and the number of edges.  
+\textbf{Figure \ref{fig:kcolor_ga}} shows the fitness curve for the Genetic Algorithm at different population sizes using a mutation rate of 0.1.   The GA performs very well on this problem, better than I expected because I thought the locality in the bit string would be less.  Further review could be done to explore the relationship between GA performance and the number of edges.  
 
 \begin{figure}[!htb]
 \centering
@@ -312,7 +314,7 @@ The MIMIC algorithm stands for Mutual-Information-Maximizing Input Clustering.  
 \label{fig:kcolor_walltime_comparison_90}
 \end{figure}
 
-\textbf{Figure \ref{fig:kcolor_fitness_comparison_90}} shows the comparison of all the algorithms for the K Colors problem using a bit string length of 90 \emph{(Note that the y axis fitness scale, lower is better)} and \textbf{Figure \ref{fig:kcolor_walltime_comparison_90}} shows the wall time comparison for the different algorithms.  MIMIC had the fewest iterations, and was slightly faster than the Genetic Algorithm.  MIMIC's better speed than GA was likely due to its pariticular fit for this problem, having it do fewer iterations.  Simulated Annealing had the most iterations to reach the best fitness, but was the quickest by far, so it would probably be considered the best.  RHC was very challenged by the large state space, taking the longest time and having the worst fitness score.
+\textbf{Figure \ref{fig:kcolor_fitness_comparison_90}} shows the comparison of all the algorithms for the K Colors problem using a bit string length of 90 \emph{(Note that the y axis fitness scale is inverted because lower is better)} and \textbf{Figure \ref{fig:kcolor_walltime_comparison_90}} shows the wall time comparison for the different algorithms.  MIMIC had the fewest iterations, and was slightly faster than the Genetic Algorithm.  MIMIC's better speed than GA was likely due to its pariticular fit for this problem, having it do fewer iterations.  Simulated Annealing had the most iterations to reach its best fitness, but was the quickest by far, so it would probably be considered the best.  RHC was very challenged by the large state space, taking the longest time and having the worst fitness score.
 
 \section{Neural Network Optimization}
 
@@ -328,15 +330,15 @@ I chose to use my PyTorch model from the first assignment with some changes.  I 
 \label{fig:nn_gradient_initial}
 \end{figure}
 
-For training, I used random mini-batches of 100 for each iteration of training.  This created 600 iterations to complete an epoch where the model had done a full pass on the data.  I used a learning rate of 0.001 with the SGD optimizer, which uses stochastic gradient descent with momentum.  This is one of the simpler optimizers and a reasonable comparison to the randomized options. The new network performed well, as seen in  \textbf{Figure \ref{fig:nn_gradient_initial}}  using the standard back propagation, reaching accuracy in the test set of ~97\% within 150 iterations.   The networks from the previous assignment performed better, but had two layers, with even better performance using two convolutional layers. 
+For training, I used random mini-batches of 100 for each iteration of training.  This created 600 iterations to complete an epoch where the model had done a full pass on the data.  I used a learning rate of 0.001 with the SGD optimizer for gradient descent, which uses stochastic gradient descent with momentum.  This is one of the simpler optimizers and a reasonable comparison to the randomized options. The new network performed well, as seen in  \textbf{Figure \ref{fig:nn_gradient_initial}}  using the standard back propagation, reaching accuracy in the validation | test set of ~97\% within 150 epochs.   The networks from the previous assignment performed better, but had two hidden layers, with even better performance using two additional convolutional layers. 
 
-Making adjustments to the PyTorch model to allow for the randomized algorithms began with creating functions to get the weights and biases from the networks and then load them after optimization.  The first layer had 65856 weights and 84 biases, the second layer had 840 weights and 10 biases, for a total of 66790 features in the state.  This is quite a large set and I expected the learning algorithms to be challenged by it.  Then I needed to expose a fitness function that would take a proposed state.  To accomplish this, the model takes the proposed state, loads it into the network, and returns the cross entropy loss against the current training batch.   Because this was a loss, the optimization problem is for minimization.
+I needed to make adjustments to the PyTorch model to allow for the randomized algorithms. This began with creating functions to get the weights and biases from the networks and then load them after optimization.  The first layer had 65,856 weights and 84 biases, the second layer had 840 weights and 10 biases, for a total of 66,790 features in the state.  This is quite a large set and I expected the learning algorithms to be challenged by it.  Then I needed to expose a fitness function that would take a proposed state.  To accomplish this, the model takes the proposed state, loads it into the network, and returns the cross entropy loss against the current training batch.   Because this was a loss, the optimization problem is for minimization.
 
 Due to the dramatic impact that different random starting states can have, all experiments loaded the network with the same initial random sets of weights and biases.
 
-I then needed to incorporate the randomized algorithms. I used the mlrose-hiive[2] for the three core algorithms.  All problems would need a problem optimizer, in this case for continuous problems. It was set to minimize the solution, with a minimum possible feature value of -10, a maximum of 10 and a step amount for testing neighbors of 0.1.  The 0.1 functions in some way as a learning rate by limiting how much change can happen at once.  The fitness function used was highlighted earlier.
+I then needed to incorporate the randomized algorithms. I used the mlrose-hiive[2] for the three core algorithms.  All problems would need a continuous problem optimizer to adjust the weights and biases. It was set to minimize the solution, with a minimum possible feature value of -10, a maximum of 10 and a step of 0.1 for creating neighbors.  The 0.1 functions in some ways as a learning rate by limiting how much change can happen at once.  
 
-I needed to replace the Back propagation training for each algorithm using the same mini-batch training. I started with Random Hill Climbing (RHC) where the key settings are maximum iterations, maximum attempts and restarts.  I left restarts at 1 to simplify the activity.  For each iteration, RHC would attempt to change 1 feature, increasing or decreasing it by the step amount.  If the change lowered fitness, it was accepted and RHC moved to the next iteration.  If it did not lower fitness, another attempt was made, up to the maximum attempts.  Thus, each training could only change up to the number of iterations out of a total of 66,790.  With a setting of 20 iterations, with each epoch having 600 trainings, only 12,000 settings could be adjusted each epoch.  This is compared with all weights and biases being updated for each training \emph{iteration} using back propagation.
+I needed to replace the gradient descent, back propagation training for each algorithm using the same mini-batch training. I started with Random Hill Climbing (RHC) where the key settings are maximum iterations, maximum attempts and restarts.  I left restarts at 1 to simplify the activity.  For each iteration, RHC would attempt to change 1 feature, increasing or decreasing it by the step amount.  If the change lowered fitness, it was accepted and RHC moved to the next iteration.  If it did not lower fitness, another attempt was made, up to the maximum attempts.  Thus, each training could only change up to the number of iterations out of a total of 66,790 features.  With a setting of 20 iterations, with each epoch having 600 training steps, only 12,000 features could be adjusted each epoch.  This is compared with all weights and biases being updated for each training \emph{step} using back propagation.
 
 \begin{figure}[!htb]
 \centering
@@ -345,15 +347,15 @@ I needed to replace the Back propagation training for each algorithm using the s
 \label{fig:nn_rhc_initial}
 \end{figure}
 
-Using a setting of 20 iterations and 10 maximum attempts, RHC was very effective in the beginning of training, as shown in \textbf{Figure \ref{fig:nn_gradient_initial}}.  The time per epoch increased by about a factor of 18, which was expected given the significant extra gyrations performed.  My biggest surprise was how well it performed!  While it only gets to an accuracy of about 88-89\%, it does this in about 25-30 epochs, which seems quite quick.  I think the fitness space for neural network is pretty smooth, which means that RHC stands a good chance to climb effectively.  Looking more closely, RHC is changing only about 7 features per iteration, much less than the potential 20, in the beginning of training.  This drops slightly as the training continues and it becomes more difficult to find upward progress.  
+Using a setting of 20 iterations and 10 maximum attempts, RHC was very effective in the beginning of training, as shown in \textbf{Figure \ref{fig:nn_gradient_initial}}.  The time per epoch increased by about a factor of 18, which was expected given the significant extra gyrations performed.  My biggest surprise was how well it performed!  While it only gets to an accuracy of about 88-89\%, it does this in about 25-30 epochs, which seems quite quick.  I think the fitness space for a neural network is relatively smooth, which means that RHC stands a good chance to climb effectively.  Looking more closely, RHC is changing only about 7 features per iteration, much less than the potential 20.  This drops slightly as the training continues and it becomes more difficult to find upward progress.  
 
-Also, I initially attempted to use a seed for the random state of the RHC algorithm to allow for reproducibility.  However, using the same seed caused it to choose the same features each time, preventing learning.  I adjusted this to use the seed to set a random generator for the mlrose algorithm.
+Also, I initially attempted to use a seed for the random state of the RHC algorithm to allow for reproducibility.  However, using the same seed caused it to choose the same features each time, preventing learning.  I adjusted this to use the seed to set a random generator for then producing a seed at each step for the mlrose algorithm.
 
-Another consideration is how complicated the model is.   The sum of the absolute values of all the weights of the RHC network is 11,448.  The back propagation sum was 2,245.  The back propagation model is changing almost all the weights at each iteration, but is doing so in a proportional manner that should continue to lessen change.  The RHC makes almost the same change at each iteration, with the only shrinking being the fact it makes fewer changes as training goes along.  Overall, the model with small weights is preferred and will likely generalize better. 
+Another consideration is how complicated the model is.   The sum of the absolute values of all the weights of the RHC network was 11,448 at the end of training.  The gradient descent, back propagation sum was 2,245.  Overall, the model with small weights is preferred and will likely generalize better. The back propagation model is changing almost all the weights at each iteration, but is doing so in a proportional manner that should continue to lessen as loss is reduced.  The RHC makes the same step change amount at each iteration, with the only shrinking factor being it makes fewer changes as training goes along.   \textbf{Figure \ref{fig:nn_gradient_initial}} shows error increasing for both training and validation, demonstrating that it will not converge.
 
-There are several areas that might enhance the RHC model. First, lowering the step might improve performance, similar to lowering the learning rate of back propagation.  More interesting would be to lower the step amount as training progresses,  much as learning rates are often decayed over training.  Another idea would be to increase the maximum attempts as training goes on.  Finding a state with better fitness becomes more difficult as training goes along. With such a large number of features,  this would possibly allow for a better solution.  Finally, tuning of the mini batch setting may also be helpful.  With back propagation, results may often improve with lower learning rates at the expense of more training iterations.  Learning can be slowed by having bigger batches, causing fewer updates per epoch.  
+There are several areas that might enhance the RHC model. First, lowering the step might improve performance, similar to lowering the learning rate of back propagation.  More interesting would be to lower the step amount as training progresses,  much as learning rates are often decayed over training.  Another idea would be to increase the maximum attempts as training goes on.  Finding a state with better fitness becomes more difficult as training goes along. With such a large number of features,  this would possibly allow for a better solution.  Finally, tuning of the mini batch size setting could also be helpful.  With back propagation, results may often improve with lower learning rates at the expense of more training iterations. 
 
-Fundamentally, the challenge that RHC will have is getting stuck in is local minima.  It does not have a structured way to get out of these.  A large step size in a sense might help, by stepping out of local minima, but those same large steps make it unlikely it can perform fine tuned optimization and require it to go to ever larger weights.   
+Fundamentally, the challenge that RHC will have is getting stuck in local minima.  It does not have a structured way to get out of these.  A large step size in a sense might help, by stepping out of local minima, but those same large steps make it unlikely it can perform fine tuned optimization and require it to go to ever larger weights.   
 
 
 \begin{figure}[!htb]
@@ -383,19 +385,20 @@ Simulated Annealing's challenge in this setting is that it uses the same startin
 \label{fig:nn_ga}
 \end{figure}
 
-Genetic Algorithms was a big star in the initial optimization problems, but was likely going to be challenged with the neural network.  Earlier, using only bit strings meant that cross over was more likely to be successful because the optimal value for each feature was going to be a 1 or a 0.  With a continuous state, optimal values could be anything, which means randomly switching sections of the state was less likely to be effective.  In addition, the key nature of locality comes to the fore here.  It does not make any sense that we would switch the weights of the last layer the last layer of another network and expect improvement, as their performance is totally dependent on the first layers of their respective networks. 
+Genetic Algorithms was a big star in the initial optimization problems, but was likely going to be challenged with the neural network.  Earlier, using only bit strings meant that cross over was more likely to be successful because the optimal value for each feature was going to be a 1 or a 0.  With a continuous state, optimal values could be anything, which means randomly switching sections of the state was less likely to be effective.  In addition, an aspect of the nature of locality comes to the fore here.  It does not make any sense that we would switch the weights of the last layer of one network with the last layer of another network and expect improvement, as their performance is totally dependent on the first layer weights of their respective networks. 
 
- \textbf{Figure \ref{fig:nn_ga}} shows GA's challenge.   With error between 84\% and 90\%, it performing barely above chance where we would expect error of 90\%.  The performance variation is probably similar to the random initial states of neural networks, more than any effective learning from GA. Due to crossover, every feature is changing at each iteration step.   The sum of the weights reaches 331,874 after 5 epochs, showing unsupportable growth.  This algorithm takes 70 times longer than RHC or SA, which themselves were 14-18 times longer than back propagation.
+ \textbf{Figure \ref{fig:nn_ga}} shows GA's challenge.   With error between 84\% and 90\%, it performing barely above chance where we would expect error of 90\%.  The performance variation is probably similar to the random initial states of neural networks, more than any effective learning from GA. Due to crossover, every feature is changing at each iteration step.   The sum of the weights reaches 331,874 after 5 epochs, showing unsupportable growth.  This algorithm takes 70 times longer than RHC or SA, which themselves were 14-18 times longer than gradient descent.
  
-I don't have many ideas to improve GA's performance because its fundamental model doesn't make much sense for network weights.  Possibly removing mini batches and training the entire data set in each iteration might help a bit, but I am skeptical.  Another idea would be to create multiple structured crossover points such that the column of inputs, hidden layer and outputs are divided into something like quadrants.  In this model, exchanged elements might retain some ability to decode part of the screen successfully, but because of the full interconnection, this still would have sets of weights mismatched at the quadrants.
+I don't have many ideas to improve GA's performance because its fundamental model doesn't make much sense for network weights.  Possibly removing mini batches and training the entire data set in each iteration might help a bit, but I am skeptical.  Another idea would be to create multiple structured crossover points such that the column of inputs, hidden layer and outputs are divided into something like quadrants.  In this model, exchanged elements might retain some ability to decode part of the image successfully, but because of the full interconnection, this still would have sets of weights mismatched at the quadrants.
 
 \begin{center}
 \begin{table}[!htb]
 \begin{tabular}{||c c c c||} 
  \hline
- Algorithm & Accuracy & Epoch (s) & Weights \\ [0.5ex] 
+ Algorithm & Accuracy & Epoch   & Weights \\
+  		&   		  & Time (s) & Sum \\ [0.5ex] 
  \hline\hline
-Back Propagation & 97\% & 1 & 2,245. \\ 
+Gradient Descent & 97\% & 1 & 2,245. \\ 
  \hline
  RHC & 89\% & 18 & 11,447 \\
  \hline
@@ -409,9 +412,11 @@ Back Propagation & 97\% & 1 & 2,245. \\
 \end{table}
 \end{center}
 
- \textbf{Table \ref{table:final_neural}} shows the summary of the algorithms used for optimizing the Neural Network.  Back propagation is clearly the best solution, as expected.  It has a structured and efficient way to adjust all weights using one calculation of loss per iteration.  RHC and SA are very similar and performed better than I expected.  With the high number of nodes and the hidden layer, RHC and SA structured method is able to effectively climb the fitness space.  They both take much longer than Back Propagation, which is understandable given the extra steps they perform, with orders of magnitude more loss calls as they consider different setting.  Their key challenge is that they are likely to get stuck in local minima.  The Genetic Algorithm, the super star of the first part this paper, is completely ineffective at this task.  Its crossover model is unlikely to be successful because combing tuned weights from one network aren't likely to work with different networks weights.
+ \textbf{Table \ref{table:final_neural}} shows the summary of the algorithms used for optimizing the Neural Network.  Gradient Descent, back propagation is clearly the best solution, as expected.  It has a structured and efficient way to adjust all weights using one calculation of loss per iteration.  RHC and SA are very similar and performed better than I expected.  With the high number of nodes and the hidden layer, RHC and SA structured method is able to effectively climb the fitness space.  They both take much longer than Back Propagation, which is understandable given the extra steps they perform, with orders of magnitude more loss calls as they consider different states.  RHC and SA also produce much larger network weights, which can be expected to not generalize as well.  Their key challenge is that they are likely to get stuck in local minima.  SA would take significant enhancement in this implementation to take advantage of its natural ability to escape local minima. The Genetic Algorithm, the super star of the first part this paper, is ineffective at this task.  Its crossover model is unlikely to be successful because combining tuned weights from one network aren't likely to work with different networks weights.
  
- I particularly enjoyed working on the Neural Network part of this project.  Pulling apart the PyTorch model and trying the different optimization models deepened my understanding of neural networks and sharpened my technical abilities with PyTorch.
+ I particularly enjoyed working on the Neural Network part of this project.  Pulling apart the PyTorch model and trying the different optimization models deepened my understanding of neural networks and sharpened my technical abilities with PyTorch.  
+ 
+I was also more savvy about coding for this assignment, using a command line model that allowed for the running of multiple scenarios concurrently in different terminals.  This was a much easier solution than trying to adjust the code to support multiprocessing.
 
 \section{References}
 \begin{tabular}{l p{2.75in}}
